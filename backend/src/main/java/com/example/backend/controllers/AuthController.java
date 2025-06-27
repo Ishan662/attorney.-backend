@@ -1,60 +1,49 @@
 package com.example.backend.controllers;
 
-import com.example.backend.model.AppUser;
-import com.example.backend.repositories.UserRepository;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseToken;
+// Import the DTO, not the Entity
+import com.example.backend.dto.UserDTO;
+import com.example.backend.service.AuthService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Optional;
+import java.util.Map;
 
 @RestController
-
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    private final UserRepository userRepository;
+    private final AuthService authService;
 
-    public AuthController(UserRepository userRepository) {
-        this.userRepository = userRepository;
+    @Autowired
+    public AuthController(AuthService authService) {
+        this.authService = authService;
     }
 
-    @CrossOrigin(origins = "http://localhost:5173")
-    @PostMapping("/verify")
-    public ResponseEntity<?> verifyToken(@RequestBody TokenRequest request) {
+    @PostMapping("/login")
+    // The response entity is now parameterized with UserDTO
+    public ResponseEntity<UserDTO> processLogin(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestBody(required = false) Map<String, String> profileData) {
+
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            // It's better to throw an exception here that can be handled globally,
+            // but for now, this is fine.
+            return ResponseEntity.badRequest().build();
+        }
+
         try {
-            FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(request.getIdToken());
+            String firebaseToken = authorizationHeader.substring(7);
 
-            String firebaseUid = decodedToken.getUid();
-            String email = decodedToken.getEmail();
+            // The service call now returns a DTO
+            UserDTO userDto = authService.processUserLogin(firebaseToken, profileData);
 
-            Optional<AppUser> existingUser = userRepository.findByFirebaseUid(firebaseUid);
-
-            if (existingUser.isEmpty()) {
-                AppUser newUser = new AppUser();
-                newUser.setFirebaseUid(firebaseUid);
-                newUser.setEmail(email);
-                newUser.setVerified(false);
-                newUser.setRole("PENDING");
-                userRepository.save(newUser);
-            }
-
-            return ResponseEntity.ok("Login successful");
+            // Return the safe DTO object to the client
+            return ResponseEntity.ok(userDto);
         } catch (Exception e) {
-            return ResponseEntity.status(401).body("Invalid token");
-        }
-    }
-
-    static class TokenRequest {
-        private String idToken;
-
-        public String getIdToken() {
-            return idToken;
-        }
-
-        public void setIdToken(String idToken) {
-            this.idToken = idToken;
+            // In a real app, you would have a @ControllerAdvice to handle exceptions globally
+            // For now, re-throwing or returning a generic error is okay.
+            // Let's return a more structured error response.
+            return ResponseEntity.status(500).build(); // Avoid sending raw exception messages
         }
     }
 }

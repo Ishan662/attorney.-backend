@@ -1,10 +1,14 @@
 package com.example.backend.repositories;
 
-import com.example.backend.model.AppUser;
+import com.example.backend.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.UUID;
 
-public interface UserRepository extends JpaRepository<AppUser, String> {
-    Optional<AppUser> findByFirebaseUid(String firebaseUid);
+@Repository
+public interface UserRepository extends JpaRepository<User, UUID> {
+    Optional<User> findByFirebaseUid(String firebaseUid);
+    Optional<User> findByEmail(String email);
 }
