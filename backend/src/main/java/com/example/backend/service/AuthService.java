@@ -1,4 +1,3 @@
-// >> In your existing file: AuthService.java
 package com.example.backend.service;
 
 import com.example.backend.dto.UserDTO;
