@@ -21,7 +21,7 @@ public class AuthController {
         this.authService = authService;
     }
 
-    @PostMapping("/resigter-lawyer")
+    @PostMapping("/register-lawyer")
     public ResponseEntity<UserDTO> registerNewLawyer(
             @RequestHeader("Authorization") String authorizationHeader,
             @RequestBody(required = false) Map<String, String> profileData
