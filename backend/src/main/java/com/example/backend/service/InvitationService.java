@@ -2,6 +2,7 @@
 package com.example.backend.service;
 
 import com.example.backend.dto.FinalizeInvitationRequest;
+import com.example.backend.dto.InvitationDetailsDTO;
 import com.example.backend.dto.InviteUserRequest;
 import com.example.backend.model.*;
 import com.example.backend.repositories.*;
@@ -134,5 +135,24 @@ public class InvitationService {
         } else {
             user.setLastName(""); // Set an empty string if no last name is present
         }
+    }
+
+    public InvitationDetailsDTO getInvitationDetails(String token) {
+        // Find the invitation and ensure it's still valid
+        Invitation invitation = invitationRepository.findByInvitationToken(token)
+                .filter(inv -> inv.getStatus() == InvitationStatus.PENDING && inv.getExpiresAt().isAfter(Instant.now()))
+                .orElseThrow(() -> new IllegalArgumentException("Invalid or expired invitation token."));
+
+        // Find the pre-provisioned user to get their name
+        User user = userRepository.findByEmail(invitation.getEmail())
+                .orElseThrow(() -> new IllegalStateException("Placeholder user not found for invitation."));
+
+        InvitationDetailsDTO dto = new InvitationDetailsDTO();
+        dto.setEmail(user.getEmail());
+        String firstName = user.getFirstName();
+        String lastName = user.getLastName();
+        String fullName = user.getFirstName() + " " + user.getLastName();
+        dto.setFullName(fullName);
+        return dto;
     }
 }
