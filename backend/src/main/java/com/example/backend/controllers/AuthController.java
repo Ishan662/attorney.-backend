@@ -38,6 +38,13 @@ public class AuthController {
         return ResponseEntity.ok(userDTO);
     }
 
+    @PostMapping("/google-sync")
+    public ResponseEntity<UserDTO> syncWithGoogle(@RequestHeader("Authorization") String authorizationHeader) {
+        String firebaseToken = extractToken(authorizationHeader);
+        UserDTO userDto = authService.processGoogleLogin(firebaseToken);
+        return ResponseEntity.ok(userDto);
+    }
+
     private String extractToken(String authorizationHeader) {
         // The logic is now correct:
         // IF the header is NULL OR it does NOT start with "Bearer "...

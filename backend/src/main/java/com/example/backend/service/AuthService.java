@@ -1,3 +1,4 @@
+// >> In your existing file: AuthService.java
 package com.example.backend.service;
 
 import com.example.backend.dto.UserDTO;
@@ -5,7 +6,7 @@ import com.example.backend.mapper.UserMapper;
 import com.example.backend.model.AppRole;
 import com.example.backend.model.Firm;
 import com.example.backend.model.User;
-import com.example.backend.model.UserStatus; // Import the new enum
+import com.example.backend.model.UserStatus;
 import com.example.backend.repositories.FirmRepository;
 import com.example.backend.repositories.UserRepository;
 import com.google.firebase.auth.FirebaseAuth;
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class AuthService {
@@ -34,21 +36,71 @@ public class AuthService {
         this.userMapper = userMapper;
     }
 
-    /**
-     * Handles the registration of a brand-new lawyer.
-     * Contains the critical security check to prevent invited users from using this flow.
-     */
     @Transactional
     public UserDTO registerNewLawyer(String firebaseTokenString, Map<String, String> profileData) {
         FirebaseToken decodedToken = verifyFirebaseToken(firebaseTokenString);
         String email = decodedToken.getEmail();
 
-        // If a user record with this email already exists (even a pending one),
-        // it means they were invited. Block this registration attempt.
         if (userRepository.findByEmail(email).isPresent()) {
-            throw new IllegalStateException("This email address is already registered or has a pending invitation. Please log in or use your invitation link.");
+            throw new IllegalStateException("This email address is already registered or has a pending invitation.");
         }
 
+        // --- ▼▼▼ CHANGE: CALL THE NEW HELPER METHOD ▼▼▼ ---
+        // The logic is now delegated to the helper method.
+        User newUser = createNewLawyerAndFirm(decodedToken, profileData);
+        newUser.setStatus(UserStatus.ACTIVE);
+        User savedUser = userRepository.save(newUser);
+
+        // TODO: Create TRIAL subscription
+
+        return userMapper.toUserDTO(savedUser);
+    }
+
+    public UserDTO getSessionInfoForCurrentUser() {
+        String firebaseUid = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepository.findByFirebaseUid(firebaseUid)
+                .orElseThrow(() -> new UsernameNotFoundException("Authenticated user not found in database."));
+        return userMapper.toUserDTO(currentUser);
+    }
+
+    @Transactional
+    public UserDTO processGoogleLogin(String firebaseTokenString) {
+        FirebaseToken decodedToken = verifyFirebaseToken(firebaseTokenString);
+        String uid = decodedToken.getUid();
+        String email = decodedToken.getEmail();
+
+        Optional<User> existingUserOpt = userRepository.findByFirebaseUid(uid);
+
+        if (existingUserOpt.isPresent()) {
+            return userMapper.toUserDTO(existingUserOpt.get());
+        } else {
+            if (userRepository.findByEmail(email).isPresent()) {
+                throw new IllegalStateException("This email is associated with a pending invitation.");
+            }
+
+            // --- ▼▼▼ CHANGE: CALL THE NEW HELPER METHOD ▼▼▼ ---
+            // The logic is now delegated to the helper method. Pass null for profileData
+            // as we will get the name from the token itself.
+            User newLawyer = createNewLawyerAndFirm(decodedToken, null);
+            newLawyer.setStatus(UserStatus.ACTIVE);
+            User savedUser = userRepository.save(newLawyer);
+
+            // TODO: Create TRIAL subscription
+
+            return userMapper.toUserDTO(savedUser);
+        }
+    }
+
+    // --- ▼▼▼ NEW HELPER METHOD CREATED FROM YOUR EXISTING LOGIC ▼▼▼ ---
+    /**
+     * A private helper to encapsulate the logic of creating a new Firm and a new User.
+     * This is now reusable for both manual registration and Google sign-up.
+     * @param decodedToken The verified token from Firebase.
+     * @param profileData Optional map of profile data from a form. Can be null.
+     * @return The newly created (but not yet saved) User entity.
+     */
+    private User createNewLawyerAndFirm(FirebaseToken decodedToken, Map<String, String> profileData) {
+        // --- Create the Firm ---
         Firm newFirm = new Firm();
         String fullNameFromToken = decodedToken.getName();
         String firmNameBasis = (profileData != null && profileData.get("firstName") != null)
@@ -60,33 +112,15 @@ public class AuthService {
         // --- Create the User ---
         User newUser = new User();
         newUser.setFirebaseUid(decodedToken.getUid());
-        newUser.setEmail(email);
+        newUser.setEmail(decodedToken.getEmail());
         newUser.setRole(AppRole.LAWYER);
         newUser.setFirm(newFirm);
-        newUser.setStatus(UserStatus.ACTIVE);
-        parseAndSetUserName(newUser, fullNameFromToken, profileData);
+        parseAndSetUserName(newUser, fullNameFromToken, profileData); // Use existing helper to set name
 
-        User savedUser = userRepository.save(newUser);
-
-        // TODO: Create a new TRIAL subscription for the new firm here.
-
-        return userMapper.toUserDTO(savedUser);
+        return newUser;
     }
+    // --- ▲▲▲ NEW HELPER METHOD CREATED ▲▲▲ ---
 
-    /**
-     * Fetches the profile for the currently authenticated user.
-     * This is used for all returning users upon login to hydrate the frontend.
-     */
-    public UserDTO getSessionInfoForCurrentUser() {
-        // Get the firebase_uid from the security context which was populated by our filter
-        String firebaseUid = SecurityContextHolder.getContext().getAuthentication().getName();
-
-        User currentUser = userRepository.findByFirebaseUid(firebaseUid)
-                .orElseThrow(() -> new UsernameNotFoundException("Authenticated user not found in database."));
-
-        // TODO: Here you can build a richer DTO with subscription details and permissions.
-        return userMapper.toUserDTO(currentUser);
-    }
 
     private FirebaseToken verifyFirebaseToken(String tokenString) {
         try {
@@ -96,7 +130,6 @@ public class AuthService {
         }
     }
 
-    // Updated this helper to accept the profileData map
     private void parseAndSetUserName(User user, String fullName, Map<String, String> profileData) {
         if (profileData != null && profileData.get("firstName") != null) {
             user.setFirstName(profileData.get("firstName"));
