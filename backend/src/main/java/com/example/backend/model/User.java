@@ -47,10 +47,21 @@ public class User {
 
     private boolean isLawyerVerified = false;
 
-    private boolean isActive = false;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private UserStatus status = UserStatus.PENDING_INVITATION;
+
 
     @Column(nullable = false)
     private Instant createdAt = Instant.now();
+
+    public UserStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(UserStatus status) {
+        this.status = status;
+    }
 
     public UUID getId() {
         return id;
@@ -116,13 +127,6 @@ public class User {
         isLawyerVerified = lawyerVerified;
     }
 
-    public boolean isActive() {
-        return isActive;
-    }
-
-    public void setActive(boolean active) {
-        isActive = active;
-    }
 
     public Instant getCreatedAt() {
         return createdAt;
