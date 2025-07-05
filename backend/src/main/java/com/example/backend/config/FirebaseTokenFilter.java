@@ -1,3 +1,4 @@
+// >> In your existing file: FirebaseTokenFilter.java
 package com.example.backend.config;
 
 import com.google.firebase.auth.FirebaseAuth;
@@ -13,15 +14,26 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException; // Import this exception
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.List;
 
 @Component
 public class FirebaseTokenFilter extends OncePerRequestFilter {
 
     private final UserDetailsService userDetailsService;
+
+    // --- ▼▼▼ ADD THIS LIST OF PUBLIC PATHS ▼▼▼ ---
+    // A list of paths that should be allowed to bypass this filter's main logic.
+    private static final List<String> PUBLIC_PATHS = List.of(
+            "/api/auth/register-lawyer",
+            "/api/invitations/finalize"
+            // You can add more public paths here if needed, e.g., /api/auth/google-sync
+    );
+    // --- ▲▲▲ ADD THIS LIST OF PUBLIC PATHS ▲▲▲ ---
 
     @Autowired
     public FirebaseTokenFilter(UserDetailsService userDetailsService) {
@@ -34,12 +46,20 @@ public class FirebaseTokenFilter extends OncePerRequestFilter {
                                     @NonNull FilterChain filterChain)
             throws ServletException, IOException {
 
+        // --- ▼▼▼ ADD THIS NEW CHECK AT THE TOP ▼▼▼ ---
+        // Check if the request path is in our list of public paths.
+        if (isPublicPath(request)) {
+            // If it is a public path, we do NOTHING and just pass the request
+            // down the filter chain. This prevents the filter from trying to
+            // authenticate a user who is in the process of registering.
+            filterChain.doFilter(request, response);
+            return;
+        }
+        // --- ▲▲▲ ADD THIS NEW CHECK AT THE TOP ▲▲▲ ---
+
+
         final String header = request.getHeader("Authorization");
 
-        // If there's no token, we just pass the request along.
-        // If the endpoint is protected, Spring Security's authorization filter
-        // will deny access later. If it's public, it will be allowed.
-        // This is the key change.
         if (header == null || !header.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
@@ -51,20 +71,35 @@ public class FirebaseTokenFilter extends OncePerRequestFilter {
             FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(idToken);
             String uid = decodedToken.getUid();
 
-            // If token is valid, try to load the user and set authentication context.
+            // The user must exist in our DB for any non-public endpoint
             UserDetails userDetails = userDetailsService.loadUserByUsername(uid);
+
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                     userDetails, null, userDetails.getAuthorities());
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        } catch (FirebaseAuthException | IllegalArgumentException e) {
-            // If token is invalid, we can log it but we DON'T send an error.
-            // We just clear the context and let the request proceed.
-            // Spring's authorization will then handle it. If the endpoint is protected,
-            // it will fail with a 401. If it's public, it will succeed.
+        } catch (FirebaseAuthException | UsernameNotFoundException | IllegalArgumentException e) {
+            // If the token is invalid or the user is not found, we clear the context.
+            // Spring Security will then deny access because the endpoint is protected.
+            // This is correct behavior for protected endpoints.
             SecurityContextHolder.clearContext();
+            // We can optionally set a 401 Unauthorized status here to be more explicit
+            // response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            // return; // uncomment if you add the line above
         }
 
         filterChain.doFilter(request, response);
     }
+
+    // --- ▼▼▼ ADD THIS NEW HELPER METHOD ▼▼▼ ---
+    /**
+     * Helper method to check if the current request path is one of the defined public paths.
+     * @param request The incoming servlet request.
+     * @return true if the path is public, false otherwise.
+     */
+    private boolean isPublicPath(HttpServletRequest request) {
+        String path = request.getServletPath();
+        return PUBLIC_PATHS.stream().anyMatch(publicPath -> publicPath.equals(path));
+    }
+    // --- ▲▲▲ ADD THIS NEW HELPER METHOD ▲▲▲ ---
 }

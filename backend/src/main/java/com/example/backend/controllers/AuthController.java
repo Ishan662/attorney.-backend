@@ -39,11 +39,14 @@ public class AuthController {
     }
 
     private String extractToken(String authorizationHeader) {
-        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+        // The logic is now correct:
+        // IF the header is NULL OR it does NOT start with "Bearer "...
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            // ...THEN it is invalid, so we throw an exception.
             throw new IllegalArgumentException("Authorization header is missing or invalid.");
         }
-        assert authorizationHeader != null;
-        // return the token without the String "Bearer" on it
+        // If the code reaches here, the header is valid.
+        // We can safely extract the token.
         return authorizationHeader.substring(7);
     }
 }
