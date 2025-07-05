@@ -2,16 +2,14 @@ package com.example.backend.controllers;
 
 
 import com.example.backend.dto.FinalizeInvitationRequest;
+import com.example.backend.dto.InvitationDetailsDTO;
 import com.example.backend.dto.InviteUserRequest;
 import com.example.backend.model.Invitation;
 import com.example.backend.service.InvitationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/invitations")
@@ -43,6 +41,19 @@ public class InvitationController {
     public ResponseEntity<Void> finalizeInvitation(@RequestBody FinalizeInvitationRequest finalizeRequest) {
         invitationService.finalizeInvitation(finalizeRequest);
         return ResponseEntity.ok().build();
+    }
+
+    // ▼▼▼ ADD THIS NEW ENDPOINT ▼▼▼
+    /**
+     * A public endpoint to get the basic details of a pending invitation.
+     * This allows the frontend to pre-fill the invitee's email and name.
+     * @param token The invitation token from the URL.
+     * @return A DTO with safe-to-display information.
+     */
+    @GetMapping("/details")
+    public ResponseEntity<InvitationDetailsDTO> getInvitationDetails(@RequestParam String token) {
+        InvitationDetailsDTO details = invitationService.getInvitationDetails(token);
+        return ResponseEntity.ok(details);
     }
 
 }
