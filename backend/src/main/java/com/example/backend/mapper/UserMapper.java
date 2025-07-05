@@ -19,10 +19,10 @@ public class UserMapper {
         dto.setLastName(user.getLastName());
         dto.setRole(user.getRole());
 
-        // This is safe because user.getFullName() is a @Transient method
-//        dto.setFullName(user.getFullName());
+        String firstName = user.getFirstName() != null ? user.getFirstName() : "";
+        String lastName = user.getLastName() != null ? user.getLastName() : "";
+        dto.setFullName((firstName + " " + lastName).trim());
 
-// Safely access the lazy-loaded Firm object
         if (user.getFirm() != null) {
             dto.setFirmId(user.getFirm().getId());
             dto.setFirmName(user.getFirm().getFirmName());

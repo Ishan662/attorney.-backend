@@ -2,9 +2,11 @@ package com.example.backend.controllers;
 
 // Import the DTO, not the Entity
 import com.example.backend.dto.UserDTO;
+import com.example.backend.model.User;
 import com.example.backend.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
@@ -19,31 +21,39 @@ public class AuthController {
         this.authService = authService;
     }
 
-    @PostMapping("/login")
-    // The response entity is now parameterized with UserDTO
-    public ResponseEntity<UserDTO> processLogin(
+    @PostMapping("/register-lawyer")
+    public ResponseEntity<UserDTO> registerNewLawyer(
             @RequestHeader("Authorization") String authorizationHeader,
-            @RequestBody(required = false) Map<String, String> profileData) {
+            @RequestBody(required = false) Map<String, String> profileData
+    ){
+        String firebaseToken = extractToken(authorizationHeader);
+        UserDTO userDto = authService.registerNewLawyer(firebaseToken, profileData);
+        return ResponseEntity.ok(userDto);
+    }
 
+    @GetMapping("/session")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<UserDTO> getUserSessionInfo(){
+        UserDTO userDTO = authService.getSessionInfoForCurrentUser();
+        return ResponseEntity.ok(userDTO);
+    }
+
+    @PostMapping("/google-sync")
+    public ResponseEntity<UserDTO> syncWithGoogle(@RequestHeader("Authorization") String authorizationHeader) {
+        String firebaseToken = extractToken(authorizationHeader);
+        UserDTO userDto = authService.processGoogleLogin(firebaseToken);
+        return ResponseEntity.ok(userDto);
+    }
+
+    private String extractToken(String authorizationHeader) {
+        // The logic is now correct:
+        // IF the header is NULL OR it does NOT start with "Bearer "...
         if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
-            // It's better to throw an exception here that can be handled globally,
-            // but for now, this is fine.
-            return ResponseEntity.badRequest().build();
+            // ...THEN it is invalid, so we throw an exception.
+            throw new IllegalArgumentException("Authorization header is missing or invalid.");
         }
-
-        try {
-            String firebaseToken = authorizationHeader.substring(7);
-
-            // The service call now returns a DTO
-            UserDTO userDto = authService.processUserLogin(firebaseToken, profileData);
-
-            // Return the safe DTO object to the client
-            return ResponseEntity.ok(userDto);
-        } catch (Exception e) {
-            // In a real app, you would have a @ControllerAdvice to handle exceptions globally
-            // For now, re-throwing or returning a generic error is okay.
-            // Let's return a more structured error response.
-            return ResponseEntity.status(500).build(); // Avoid sending raw exception messages
-        }
+        // If the code reaches here, the header is valid.
+        // We can safely extract the token.
+        return authorizationHeader.substring(7);
     }
 }

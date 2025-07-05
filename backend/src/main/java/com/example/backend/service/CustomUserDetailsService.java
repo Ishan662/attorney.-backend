@@ -1,6 +1,7 @@
 package com.example.backend.service;
 
 import com.example.backend.model.User;
+import com.example.backend.model.UserStatus; // <-- Make sure to import the new enum
 import com.example.backend.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -22,9 +23,17 @@ public class CustomUserDetailsService implements UserDetailsService {
         User appUser = userRepository.findByFirebaseUid(firebaseUid)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with Firebase UID: " + firebaseUid));
 
-        if (!appUser.isActive()) {
-            throw new UsernameNotFoundException("User account is not active");
+        // --- ▼▼▼ THIS IS THE FIX ▼▼▼ ---
+        //
+        // We are replacing the call to the deleted 'isActive()' method
+        // with a check against the new 'status' field.
+        // A user is only considered valid for login if their status is ACTIVE.
+        //
+        if (appUser.getStatus() != UserStatus.ACTIVE) {
+            throw new UsernameNotFoundException("User account is not active. Status: " + appUser.getStatus());
         }
+        // --- ▲▲▲ THIS IS THE FIX ▲▲▲ ---
+
 
         // The "ROLE_" prefix is a standard convention for Spring Security's hasRole() check
         return new org.springframework.security.core.userdetails.User(

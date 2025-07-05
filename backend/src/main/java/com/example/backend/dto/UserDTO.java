@@ -10,6 +10,7 @@ public class UserDTO {
     private String email;
     private String firstName;
     private String lastName;
+
     private String fullName; // We can pre-calculate this for the frontend's convenience
     private AppRole role;
     private UUID firmId;
