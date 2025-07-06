@@ -114,7 +114,9 @@ public class AuthService {
         newUser.setFirebaseUid(decodedToken.getUid());
         newUser.setEmail(decodedToken.getEmail());
 //        assert profileData != null;
-        newUser.setPhoneNumber(Integer.valueOf(profileData.get("phoneNumber")));
+        if (profileData != null) {
+            newUser.setPhoneNumber(Integer.valueOf(profileData.get("phoneNumber")));
+        }
         newUser.setRole(AppRole.LAWYER);
         newUser.setFirm(newFirm);
         parseAndSetUserName(newUser, fullNameFromToken, profileData); // Use existing helper to set name
