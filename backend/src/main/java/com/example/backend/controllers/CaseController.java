@@ -28,7 +28,7 @@ public class CaseController {
      *
      * @param caseDTO The data for the new case from the request body.
      * @return The created case data with a 201 CREATED status.
-     */
+     **/
     @PostMapping
     @PreAuthorize("hasRole('LAWYER')")
     public ResponseEntity<CaseDTO> createCase(@RequestBody CaseDTO caseDTO) {
