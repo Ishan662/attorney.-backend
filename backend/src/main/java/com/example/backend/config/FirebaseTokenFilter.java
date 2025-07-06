@@ -71,8 +71,12 @@ public class FirebaseTokenFilter extends OncePerRequestFilter {
             FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(idToken);
             String uid = decodedToken.getUid();
 
+            System.out.println("FirebaseTokenFilter: Token verified for UID: " + uid);
+
             // The user must exist in our DB for any non-public endpoint
             UserDetails userDetails = userDetailsService.loadUserByUsername(uid);
+
+            System.out.println("FirebaseTokenFilter: UserDetails loaded. Authorities: " + userDetails.getAuthorities());
 
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                     userDetails, null, userDetails.getAuthorities());
@@ -82,6 +86,7 @@ public class FirebaseTokenFilter extends OncePerRequestFilter {
             // If the token is invalid or the user is not found, we clear the context.
             // Spring Security will then deny access because the endpoint is protected.
             // This is correct behavior for protected endpoints.
+            System.err.println("Error in FirebaseTokenFilter: " + e.getMessage());
             SecurityContextHolder.clearContext();
             // We can optionally set a 401 Unauthorized status here to be more explicit
             // response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
