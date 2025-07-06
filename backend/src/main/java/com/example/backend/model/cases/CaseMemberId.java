@@ -1,4 +1,4 @@
-package com.example.backend.model;
+package com.example.backend.model.cases;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;

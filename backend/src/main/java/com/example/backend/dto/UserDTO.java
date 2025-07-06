@@ -10,14 +10,20 @@ public class UserDTO {
     private String email;
     private String firstName;
     private String lastName;
-
+    private Integer phoneNumber;
     private String fullName; // We can pre-calculate this for the frontend's convenience
     private AppRole role;
     private UUID firmId;
     private String firmName;
 
-    // --- Getters and Setters for all fields ---
-    // [Omitted for brevity, but you must add them]
+
+    public Integer getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(Integer phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
 
     public UUID getId() {
         return id;

@@ -2,7 +2,6 @@ package com.example.backend.controllers;
 
 // Import the DTO, not the Entity
 import com.example.backend.dto.UserDTO;
-import com.example.backend.model.User;
 import com.example.backend.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

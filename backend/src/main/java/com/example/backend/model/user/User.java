@@ -1,6 +1,9 @@
-package com.example.backend.model;
+package com.example.backend.model.user;
 
 //  ▼▼▼ CHANGE THIS BLOCK ▼▼▼
+import com.example.backend.model.AppRole;
+import com.example.backend.model.firm.Firm;
+import com.example.backend.model.UserStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -35,6 +38,9 @@ public class User {
     @Column(unique = true, nullable = false)
     private String email;
 
+    @Column(unique = true)
+    private Integer phoneNumber;
+
     @Column(length = 100)
     private String firstName;
 
@@ -54,6 +60,14 @@ public class User {
 
     @Column(nullable = false)
     private Instant createdAt = Instant.now();
+
+    public Integer getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(Integer phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
 
     public UserStatus getStatus() {
         return status;

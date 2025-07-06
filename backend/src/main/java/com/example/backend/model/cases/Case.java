@@ -1,5 +1,6 @@
-package com.example.backend.model;
+package com.example.backend.model.cases;
 
+import com.example.backend.model.firm.Firm;
 import jakarta.persistence.*;
 
 import java.time.Instant;

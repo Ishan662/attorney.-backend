@@ -1,7 +1,7 @@
 package com.example.backend.mapper; // Or a new 'mapper' package
 
 import com.example.backend.dto.UserDTO;
-import com.example.backend.model.User;
+import com.example.backend.model.user.User;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -15,6 +15,7 @@ public class UserMapper {
         UserDTO dto = new UserDTO();
         dto.setId(user.getId());
         dto.setEmail(user.getEmail());
+        dto.setPhoneNumber(user.getPhoneNumber());
         dto.setFirstName(user.getFirstName());
         dto.setLastName(user.getLastName());
         dto.setRole(user.getRole());

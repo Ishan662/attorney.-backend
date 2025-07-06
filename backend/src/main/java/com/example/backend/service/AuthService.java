@@ -4,8 +4,8 @@ package com.example.backend.service;
 import com.example.backend.dto.UserDTO;
 import com.example.backend.mapper.UserMapper;
 import com.example.backend.model.AppRole;
-import com.example.backend.model.Firm;
-import com.example.backend.model.User;
+import com.example.backend.model.firm.Firm;
+import com.example.backend.model.user.User;
 import com.example.backend.model.UserStatus;
 import com.example.backend.repositories.FirmRepository;
 import com.example.backend.repositories.UserRepository;
@@ -113,6 +113,8 @@ public class AuthService {
         User newUser = new User();
         newUser.setFirebaseUid(decodedToken.getUid());
         newUser.setEmail(decodedToken.getEmail());
+//        assert profileData != null;
+        newUser.setPhoneNumber(Integer.valueOf(profileData.get("phoneNumber")));
         newUser.setRole(AppRole.LAWYER);
         newUser.setFirm(newFirm);
         parseAndSetUserName(newUser, fullNameFromToken, profileData); // Use existing helper to set name
