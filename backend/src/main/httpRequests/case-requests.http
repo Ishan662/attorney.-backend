@@ -1,0 +1,100 @@
+### =================================================================
+### Case CRUD Endpoints - Test File
+### =================================================================
+
+### File-level variable for the authentication token.
+### !! IMPORTANT !!
+### Replace this placeholder with a REAL, valid Firebase ID Token from a logged-in LAWYER user.
+@auth_token = Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6Ijg3NzQ4NTAwMmYwNWJlMDI2N2VmNDU5ZjViNTEzNTMzYjVjNThjMTIiLCJ0eXAiOiJKV1QifQ.eyJuYW1lIjoiSGF6ZWwgQS5Sb2JlcnRzb24iLCJwaWN0dXJlIjoiaHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jTFBYY0lmZ2wxZl84VWhCQkUxV2NMUHJRTHBNUjlRR25BbkFKNTRmc29XMXJ3WFBBPXM5Ni1jIiwiaXNzIjoiaHR0cHM6Ly9zZWN1cmV0b2tlbi5nb29nbGUuY29tL2F0dG9ybmV5LTQ1ODYyIiwiYXVkIjoiYXR0b3JuZXktNDU4NjIiLCJhdXRoX3RpbWUiOjE3NTE3NzY2ODMsInVzZXJfaWQiOiJnOTZNZXNCWnhZV09lc2dubEJuc1YyaXFKZmoxIiwic3ViIjoiZzk2TWVzQlp4WVdPZXNnbmxCbnNWMmlxSmZqMSIsImlhdCI6MTc1MTc3NjY4MywiZXhwIjoxNzUxNzgwMjgzLCJlbWFpbCI6ImhlemVscm9iZXJ0em9uMjFAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImZpcmViYXNlIjp7ImlkZW50aXRpZXMiOnsiZ29vZ2xlLmNvbSI6WyIxMDE3NzcwODIyMjU1MDA5ODcxMjMiXSwiZW1haWwiOlsiaGV6ZWxyb2JlcnR6b24yMUBnbWFpbC5jb20iXX0sInNpZ25faW5fcHJvdmlkZXIiOiJnb29nbGUuY29tIn19.ocJRopQzUob8aCPX-VRYWCvk5zUHabqVy39tJzqAe0umyqAbx4zTGlhR5bqQRPITe0F8jzojvWHJZ63MMsgNSfx3O__JDZEg6k6ylJ9gYlm39Y58sUWfP7r4_KlCoQKbFiu_y0eyJAcIKQ5PWFHs7A-NbWnuWVOjnikZbt1Oq94ZC74DUWSjKteFeRVbE2O2rRL0AzyPJ8sCjQsEtU3L32KOnJRFMBz-iauuzOu0f1hfkW2ZtmHHQzkUTpvgqzGnuP1Wo6B-Rbj5DlnRQaqZFpFJjlAJxsliJrEZH0aCaWdUM8j8fKpOCMdOLOxE_JqlSaIomIGfKL9gLXqjXv5yiQ
+
+### =================================================================
+### 1. Create a New Case (POST)
+### =================================================================
+# This request attempts to create a new case.
+# It will only succeed if the auth_token belongs to a user with the 'LAWYER' role.
+POST http://localhost:8080/api/cases
+Content-Type: application/json
+Authorization: {{auth_token}}
+
+{
+  "caseTitle": "Smith v. Jones Construction",
+  "caseType": "Civil Litigation",
+  "caseNumber": "CIV-2024-001",
+  "description": "Dispute over contract completion for the downtown library project.",
+  "partyName": "Jones Construction Inc.",
+  "courtName": "District Court of Colombo",
+  "status": "OPEN",
+  "agreedFee": 5000.00,
+  "paymentStatus": "NOT_INVOICED",
+  "totalExpenses": 0.00,
+  "invoicedAmount": 0.00
+}
+
+
+### =================================================================
+### 2. Get All Cases for Current User (GET)
+### =================================================================
+# This request fetches all non-archived cases accessible to the user.
+# - If the token is from a LAWYER, it will return all cases in their firm.
+# - If the token is from a JUNIOR/CLIENT, it will only return cases they are a member of.
+GET http://localhost:8080/api/cases
+Authorization: {{auth_token}}
+
+
+### =================================================================
+### 3. Get a Single Case by ID (GET)
+### =================================================================
+# This request fetches one specific case.
+# First, run the "Create Case" request above. Copy the "id" from its response.
+# Then, paste that ID here to test this endpoint.
+# It will only succeed if the user has permission to view this specific case.
+
+# !! IMPORTANT !! Replace this UUID with a real case ID from your database.
+@case_id = c8c5fdf2-a84a-4424-b476-dcb42c1f6048
+
+GET http://localhost:8080/api/cases/{{case_id}}
+Authorization: {{auth_token}}
+
+
+### =================================================================
+### 4. Update an Existing Case (PUT)
+### =================================================================
+# This request updates the details of a specific case.
+# It will only succeed if the auth_token belongs to a LAWYER who owns this case.
+# Use the same @case_id variable from the request above.
+PUT http://localhost:8080/api/cases/{{case_id}}
+Content-Type: application/json
+Authorization: {{auth_token}}
+
+{
+  "caseTitle": "Smith v. Jones Construction (Updated)",
+  "caseType": "Civil Litigation",
+  "caseNumber": "CIV-2024-001",
+  "description": "Dispute over contract completion. Awaiting discovery documents.",
+  "partyName": "Jones Construction Inc.",
+  "courtName": "District Court of Colombo",
+  "status": "IN_PROGRESS",
+  "paymentStatus": "PENDING_PAYMENT",
+  "totalExpenses": 250.50,
+  "invoicedAmount": 1500.00
+}
+
+
+### =================================================================
+### 5. Archive (Soft-Delete) a Case (DELETE)
+### =================================================================
+# This request will change the status of a case to 'ARCHIVED'.
+# It will only succeed if the auth_token belongs to a LAWYER who owns this case.
+# Use the same @case_id variable.
+DELETE http://localhost:8080/api/cases/{{case_id}}
+Authorization: {{auth_token}}
+
+
+### =================================================================
+### 6. (Optional Test) Verify Case is Archived
+### =================================================================
+# After running the DELETE request, run this GET request again.
+# The case list should NO LONGER include the case you just archived.
+# This confirms your soft-delete logic is working.
+GET http://localhost:8080/api/cases
+Authorization: {{auth_token}}
