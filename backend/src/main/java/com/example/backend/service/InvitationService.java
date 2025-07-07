@@ -1,9 +1,9 @@
 // >> In a new file: InvitationService.java
 package com.example.backend.service;
 
-import com.example.backend.dto.FinalizeInvitationRequest;
-import com.example.backend.dto.InvitationDetailsDTO;
-import com.example.backend.dto.InviteUserRequest;
+import com.example.backend.dto.InviteDTOS.FinalizeInvitationRequest;
+import com.example.backend.dto.InviteDTOS.InvitationDetailsDTO;
+import com.example.backend.dto.InviteDTOS.InviteUserRequest;
 import com.example.backend.model.*;
 import com.example.backend.model.cases.Case;
 import com.example.backend.model.cases.CaseMember;

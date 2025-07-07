@@ -1,6 +1,6 @@
 package com.example.backend.mapper;
 
-import com.example.backend.dto.CaseDTO;
+import com.example.backend.dto.caseDTOS.CaseDTO;
 import com.example.backend.model.cases.Case;
 import org.springframework.stereotype.Component;
 

@@ -1,6 +1,6 @@
 package com.example.backend.service;
 
-import com.example.backend.dto.CaseDTO;
+import com.example.backend.dto.caseDTOS.CaseDTO;
 import com.example.backend.mapper.CaseMapper;
 import com.example.backend.model.AppRole;
 import com.example.backend.model.cases.Case;

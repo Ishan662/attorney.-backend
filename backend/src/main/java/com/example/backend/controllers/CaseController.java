@@ -1,6 +1,6 @@
 package com.example.backend.controllers;
 
-import com.example.backend.dto.CaseDTO;
+import com.example.backend.dto.caseDTOS.CaseDTO;
 import com.example.backend.service.CaseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

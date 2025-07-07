@@ -1,4 +1,4 @@
-package com.example.backend.dto;
+package com.example.backend.dto.caseDTOS;
 
 import com.example.backend.model.cases.CaseStatus;
 import com.example.backend.model.cases.PaymentStatus;

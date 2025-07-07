@@ -1,4 +1,4 @@
-package com.example.backend.dto;
+package com.example.backend.dto.userDTO;
 
 import com.example.backend.model.AppRole;
 import java.util.UUID;

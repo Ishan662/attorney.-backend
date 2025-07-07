@@ -1,9 +1,9 @@
 package com.example.backend.controllers;
 
 
-import com.example.backend.dto.FinalizeInvitationRequest;
-import com.example.backend.dto.InvitationDetailsDTO;
-import com.example.backend.dto.InviteUserRequest;
+import com.example.backend.dto.InviteDTOS.FinalizeInvitationRequest;
+import com.example.backend.dto.InviteDTOS.InvitationDetailsDTO;
+import com.example.backend.dto.InviteDTOS.InviteUserRequest;
 import com.example.backend.service.InvitationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

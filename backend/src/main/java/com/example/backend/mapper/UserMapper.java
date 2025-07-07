@@ -1,6 +1,6 @@
 package com.example.backend.mapper; // Or a new 'mapper' package
 
-import com.example.backend.dto.UserDTO;
+import com.example.backend.dto.userDTO.UserDTO;
 import com.example.backend.model.user.User;
 import org.springframework.stereotype.Component;
 

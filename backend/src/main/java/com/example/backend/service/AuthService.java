@@ -1,7 +1,7 @@
 // >> In your existing file: AuthService.java
 package com.example.backend.service;
 
-import com.example.backend.dto.UserDTO;
+import com.example.backend.dto.userDTO.UserDTO;
 import com.example.backend.mapper.UserMapper;
 import com.example.backend.model.AppRole;
 import com.example.backend.model.firm.Firm;
