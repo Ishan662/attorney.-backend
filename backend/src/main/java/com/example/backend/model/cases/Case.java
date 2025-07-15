@@ -1,6 +1,8 @@
 package com.example.backend.model.cases;
 
 import com.example.backend.model.firm.Firm;
+import com.example.backend.model.hearing.Hearing;
+import com.example.backend.model.user.User; // Ensure this import points to your User entity
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
@@ -9,27 +11,37 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
+/**
+ * Represents a single legal case within a firm. This is the central entity
+ * for tracking case details, parties involved, financials, and status.
+ */
 @Entity
-@Table(name = "cases")
+@Table(name = "cases", indexes = {
+        @Index(name = "idx_case_number", columnList = "caseNumber"),
+        @Index(name = "idx_case_firm_id", columnList = "firm_id")
+})
 public class Case {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
-    // Every case must belong to a firm. If the firm is deleted, its cases are also deleted.
+    // The firm that owns this case. A case cannot exist without a firm.
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "firm_id", nullable = false)
     private Firm firm;
 
+    // The user who originally created this case record. Important for auditing.
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "created_by_user_id", nullable = false)
+    private User createdBy;
+
+    // --- Core Case Details ---
     @Column(nullable = false)
     private String caseTitle;
 
-    @Column(unique = true) // Case numbers should be unique within the system or at least a firm
+    @Column(nullable = false, unique = true) // Assuming case numbers are unique system-wide
     private String caseNumber;
-
-    @Column
-    private String partyName;
 
     @Column
     private String caseType;
@@ -40,98 +52,70 @@ public class Case {
     @Column
     private String courtName;
 
-    // Replaces the 'isClosed' boolean with a more descriptive status
+    // --- Parties Involved ---
+    @Column(nullable = false)
+    private String clientName;
+
+    @Column(nullable = false)
+    private String clientPhone;
+
+    @Column
+    private String clientEmail;
+
+    @Column
+    private String opposingPartyName;
+
+    // --- Financials ---
+    @Column(precision = 19, scale = 4) // Using BigDecimal for precision with monetary values
+    private BigDecimal agreedFee;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PaymentStatus paymentStatus = PaymentStatus.NOT_INVOICED;
+
+
+    // --- Status & Timestamps ---
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private CaseStatus status = CaseStatus.OPEN;
 
-    // Financial Fields from your UI
-    @Column(precision = 19, scale = 4) // Good practice for money
-    private BigDecimal agreedFee;
-
-    @Enumerated(EnumType.STRING)
-    private PaymentStatus paymentStatus = PaymentStatus.NOT_INVOICED;
-
-    @Column(precision = 19, scale = 4)
-    private BigDecimal totalExpenses;
-
-    @Column(precision = 19, scale = 4)
-    private BigDecimal invoicedAmount;
-
-
-    // This defines the "other side" of the relationship. It tells JPA that this Case
-    // can have a set of members, and the relationship details are managed in the 'CaseMember' entity.
-    @OneToMany(
-            mappedBy = "aCase", // 'aCase' is the field name in the CaseMember class
-            cascade = CascadeType.ALL,
-            orphanRemoval = true,
-            fetch = FetchType.LAZY
-    )
-    private Set<CaseMember> members = new HashSet<>();
-
-
-    @Column(nullable = false)
+    @Column(nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 
     @Column(nullable = false)
     private Instant updatedAt = Instant.now();
 
 
-    public String getDescription() {
-        return description;
+    // --- Relationships ---
+
+    // A case can have many members (Juniors, Clients). This set holds the links.
+    @OneToMany(
+            mappedBy = "aCase",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
+    private Set<CaseMember> members = new HashSet<>();
+
+    // A case can have a timeline of many hearings.
+    @OneToMany(
+            mappedBy = "aCase",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
+    private Set<Hearing> hearings = new HashSet<>();
+
+
+    // --- Lifecycle Callbacks ---
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = Instant.now();
     }
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
 
-    public CaseStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(CaseStatus status) {
-        this.status = status;
-    }
-
-    public BigDecimal getAgreedFee() {
-        return agreedFee;
-    }
-
-    public void setAgreedFee(BigDecimal agreedFee) {
-        this.agreedFee = agreedFee;
-    }
-
-    public PaymentStatus getPaymentStatus() {
-        return paymentStatus;
-    }
-
-    public void setPaymentStatus(PaymentStatus paymentStatus) {
-        this.paymentStatus = paymentStatus;
-    }
-
-    public BigDecimal getTotalExpenses() {
-        return totalExpenses;
-    }
-
-    public void setTotalExpenses(BigDecimal totalExpenses) {
-        this.totalExpenses = totalExpenses;
-    }
-
-    public BigDecimal getInvoicedAmount() {
-        return invoicedAmount;
-    }
-
-    public void setInvoicedAmount(BigDecimal invoicedAmount) {
-        this.invoicedAmount = invoicedAmount;
-    }
-
-    public Instant getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(Instant updatedAt) {
-        this.updatedAt = updatedAt;
-    }
+    // --- Getters and Setters ---
+    // (Generated by IDE for all fields)
 
     public UUID getId() {
         return id;
@@ -147,6 +131,14 @@ public class Case {
 
     public void setFirm(Firm firm) {
         this.firm = firm;
+    }
+
+    public User getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(User createdBy) {
+        this.createdBy = createdBy;
     }
 
     public String getCaseTitle() {
@@ -165,20 +157,20 @@ public class Case {
         this.caseNumber = caseNumber;
     }
 
-    public String getPartyName() {
-        return partyName;
-    }
-
-    public void setPartyName(String partyName) {
-        this.partyName = partyName;
-    }
-
     public String getCaseType() {
         return caseType;
     }
 
     public void setCaseType(String caseType) {
         this.caseType = caseType;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public String getCourtName() {
@@ -189,6 +181,77 @@ public class Case {
         this.courtName = courtName;
     }
 
+    public String getClientName() {
+        return clientName;
+    }
+
+    public void setClientName(String clientName) {
+        this.clientName = clientName;
+    }
+
+    public String getClientPhone() {
+        return clientPhone;
+    }
+
+    public void setClientPhone(String clientPhone) {
+        this.clientPhone = clientPhone;
+    }
+
+    public String getClientEmail() {
+        return clientEmail;
+    }
+
+    public void setClientEmail(String clientEmail) {
+        this.clientEmail = clientEmail;
+    }
+
+    public String getOpposingPartyName() {
+        return opposingPartyName;
+    }
+
+    public void setOpposingPartyName(String opposingPartyName) {
+        this.opposingPartyName = opposingPartyName;
+    }
+
+    public BigDecimal getAgreedFee() {
+        return agreedFee;
+    }
+
+    public void setAgreedFee(BigDecimal agreedFee) {
+        this.agreedFee = agreedFee;
+    }
+
+    public PaymentStatus getPaymentStatus() {
+        return paymentStatus;
+    }
+
+    public void setPaymentStatus(PaymentStatus paymentStatus) {
+        this.paymentStatus = paymentStatus;
+    }
+
+    public CaseStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(CaseStatus status) {
+        this.status = status;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Instant getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(Instant updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 
     public Set<CaseMember> getMembers() {
         return members;
@@ -198,11 +261,11 @@ public class Case {
         this.members = members;
     }
 
-    public Instant getCreatedAt() {
-        return createdAt;
+    public Set<Hearing> getHearings() {
+        return hearings;
     }
 
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
+    public void setHearings(Set<Hearing> hearings) {
+        this.hearings = hearings;
     }
 }

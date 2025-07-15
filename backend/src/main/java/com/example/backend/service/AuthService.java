@@ -28,12 +28,14 @@ public class AuthService {
     private final UserRepository userRepository;
     private final FirmRepository firmRepository;
     private final UserMapper userMapper;
+    private final SubscriptionService subscriptionService;
 
     @Autowired
-    public AuthService(UserRepository userRepository, FirmRepository firmRepository, UserMapper userMapper) {
+    public AuthService(UserRepository userRepository, FirmRepository firmRepository, UserMapper userMapper, SubscriptionService subscriptionService) {
         this.userRepository = userRepository;
         this.firmRepository = firmRepository;
         this.userMapper = userMapper;
+        this.subscriptionService = subscriptionService;
     }
 
     @Transactional
@@ -51,6 +53,7 @@ public class AuthService {
         newUser.setStatus(UserStatus.ACTIVE);
         User savedUser = userRepository.save(newUser);
 
+        subscriptionService.createTrialSubscriptionForFirm(savedUser.getFirm());
         // TODO: Create TRIAL subscription
 
         return userMapper.toUserDTO(savedUser);
@@ -84,6 +87,8 @@ public class AuthService {
             User newLawyer = createNewLawyerAndFirm(decodedToken, null);
             newLawyer.setStatus(UserStatus.ACTIVE);
             User savedUser = userRepository.save(newLawyer);
+
+            subscriptionService.createTrialSubscriptionForFirm(savedUser.getFirm());
 
             // TODO: Create TRIAL subscription
 

@@ -1,20 +1,34 @@
 package com.example.backend.service;
 
-import com.example.backend.dto.caseDTOS.CaseDTO;
+// DTOs
+import com.example.backend.dto.caseDTOS.CaseResponseDTO;
+import com.example.backend.dto.caseDTOS.CreateCaseRequest;
+
+// Mapper and Model classes
+import com.example.backend.dto.caseDTOS.UpdateCaseRequest;
 import com.example.backend.mapper.CaseMapper;
 import com.example.backend.model.AppRole;
-import com.example.backend.model.cases.Case;
-import com.example.backend.model.cases.CaseStatus;
+import com.example.backend.model.cases.*;
+import com.example.backend.model.hearing.Hearing;
+import com.example.backend.model.hearing.HearingStatus;
 import com.example.backend.model.user.User;
+// We no longer need UserStatus in this specific method, but it's good to keep
+import com.example.backend.model.UserStatus;
+
+// Repositories
 import com.example.backend.repositories.CaseRepository;
 import com.example.backend.repositories.UserRepository;
+import com.example.backend.repositories.HearingRepository;
+import com.example.backend.repositories.CaseMemberRepository;
+
+// Other imports...
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -25,75 +39,113 @@ public class CaseService {
     private final CaseRepository caseRepository;
     private final UserRepository userRepository;
     private final CaseMapper caseMapper;
+    private final HearingRepository hearingRepository;
+    private final CaseMemberRepository caseMemberRepository;
 
     @Autowired
-    public CaseService(CaseRepository caseRepository, UserRepository userRepository, CaseMapper caseMapper) {
+    public CaseService(CaseRepository caseRepository, UserRepository userRepository, CaseMapper caseMapper,
+                       HearingRepository hearingRepository, CaseMemberRepository caseMemberRepository) {
         this.caseRepository = caseRepository;
         this.userRepository = userRepository;
         this.caseMapper = caseMapper;
+        this.hearingRepository = hearingRepository;
+        this.caseMemberRepository = caseMemberRepository;
     }
 
+    // --- ▼▼▼ THIS IS THE REFACTORED METHOD WITH SIMPLIFIED LOGIC ▼▼▼ ---
     @Transactional
-    public CaseDTO createCase(CaseDTO caseDTO) {
-        User currentUser = getCurrentUser();
-
-        // A Lawyer can only create a case for their own firm.
-        if (currentUser.getRole() != AppRole.LAWYER) {
+    public UUID createCase(CreateCaseRequest request) {
+        // 1. Get the authenticated lawyer creating the case.
+        User lawyer = getCurrentUser();
+        if (lawyer.getRole() != AppRole.LAWYER) {
             throw new AccessDeniedException("Only lawyers can create new cases.");
         }
 
+        // 2. Create the primary Case entity and populate it directly from the request.
         Case newCase = new Case();
-        // Use the mapper to transfer all user-provided data from the DTO to the new entity.
-        caseMapper.updateFromDto(caseDTO, newCase);
+        newCase.setFirm(lawyer.getFirm());
+        newCase.setCreatedBy(lawyer);
 
-        // Set system-managed fields that the user cannot provide.
-        newCase.setFirm(currentUser.getFirm());
-        newCase.setCreatedAt(Instant.now());
-        newCase.setUpdatedAt(Instant.now());
-        // If you were to add back createdBy, you would set it here:
-        // newCase.setCreatedBy(currentUser);
+        // Map all fields directly from the DTO.
+        newCase.setClientName(request.getClientName());
+        newCase.setClientPhone(request.getClientPhone());
+        newCase.setClientEmail(request.getClientEmail());
+        newCase.setOpposingPartyName(request.getOpposingPartyName());
+        newCase.setCaseNumber(request.getCaseNumber());
+        newCase.setCourtName(request.getCourt());
+        newCase.setDescription(request.getDescription());
+        newCase.setAgreedFee(request.getAgreedFee());
+        newCase.setPaymentStatus(request.getPaymentStatus());
+        newCase.setCaseTitle(request.getClientName() + " vs " + request.getOpposingPartyName());
 
         Case savedCase = caseRepository.save(newCase);
 
-        // Convert the final, saved entity back to a DTO to return to the client.
-        return caseMapper.toDto(savedCase);
-    }
+        // 3. Create the initial hearing for this case if a date was provided.
+        if (request.getInitialHearingDate() != null) {
+            Hearing initialHearing = new Hearing();
+            initialHearing.setaCase(savedCase);
+            initialHearing.setHearingDate(request.getInitialHearingDate().atStartOfDay().toInstant(ZoneOffset.UTC));
+            initialHearing.setStatus(HearingStatus.PLANNED);
+            initialHearing.setCreatedByUser(lawyer);
+            initialHearing.setTitle("Initial Hearing");
+            initialHearing.setLocation(request.getCourt());
+            hearingRepository.save(initialHearing);
+        }
 
-    public List<CaseDTO> getCasesForCurrentUser() {
+        // 4. IMPORTANT: NO client user is created here. The invitation flow is now separate.
+        // The lawyer can invite the client to the portal later, which would then create the User record.
+
+        // 5. If a junior was associated, find them and add them as a case member.
+        if (request.getAssociatedJuniorId() != null) {
+            User juniorUser = userRepository.findById(request.getAssociatedJuniorId())
+                    .orElseThrow(() -> new IllegalArgumentException("Associated junior not found."));
+
+            if (!juniorUser.getFirm().getId().equals(lawyer.getFirm().getId())) {
+                throw new SecurityException("Cannot assign a junior from another firm.");
+            }
+            caseMemberRepository.save(new CaseMember(savedCase, juniorUser));
+        }
+
+        // 6. The lawyer who creates the case is automatically a member so they can see it in their "My Cases" view.
+        caseMemberRepository.save(new CaseMember(savedCase, lawyer));
+
+        return savedCase.getId();
+    }
+    // --- ▲▲▲ END OF REFACTORED METHOD ▲▲▲ ---
+
+    // --- OTHER METHODS REMAIN UNCHANGED ---
+
+    public List<CaseResponseDTO> getCasesForCurrentUser() {
         User currentUser = getCurrentUser();
         List<Case> cases;
 
         if (currentUser.getRole() == AppRole.LAWYER) {
-            // A lawyer sees all non-archived cases in their firm.
             cases = caseRepository.findAllByFirmId(currentUser.getFirm().getId())
                     .stream()
                     .filter(c -> c.getStatus() != CaseStatus.ARCHIVED)
                     .collect(Collectors.toList());
-        } else {
-            // A Junior or Client only sees the non-archived cases they are an explicit member of.
+        } else { // For Junior or Client
             cases = caseRepository.findCasesByMemberUserId(currentUser.getId())
                     .stream()
                     .filter(c -> c.getStatus() != CaseStatus.ARCHIVED)
                     .collect(Collectors.toList());
         }
 
-        // Use the mapper to convert the list of entities to a list of DTOs.
         return cases.stream()
-                .map(caseMapper::toDto)
+                .map(caseMapper::toResponseDto)
                 .collect(Collectors.toList());
     }
 
-    public CaseDTO getCaseById(UUID caseId) {
+    public CaseResponseDTO getCaseById(UUID caseId) {
         User currentUser = getCurrentUser();
         Case aCase = caseRepository.findById(caseId)
                 .orElseThrow(() -> new RuntimeException("Case not found with ID: " + caseId));
 
-        // SECURITY CHECK: Ensure the user has access before returning data.
         if (currentUser.getRole() == AppRole.LAWYER) {
             if (!aCase.getFirm().getId().equals(currentUser.getFirm().getId())) {
                 throw new AccessDeniedException("You do not have permission to view this case.");
             }
-        } else { // For Junior or Client
+        } else {
             boolean isMember = aCase.getMembers().stream()
                     .anyMatch(member -> member.getUser().getId().equals(currentUser.getId()));
             if (!isMember) {
@@ -101,26 +153,41 @@ public class CaseService {
             }
         }
 
-        return caseMapper.toDto(aCase);
+        return caseMapper.toResponseDto(aCase);
     }
 
+    // --- ▼▼▼ ADD THIS NEW METHOD ▼▼▼ ---
     @Transactional
-    public CaseDTO updateCase(UUID caseId, CaseDTO caseDTO) {
+    public CaseResponseDTO updateCase(UUID caseId, UpdateCaseRequest updateRequest) {
+        // 1. Get the current user who is making the request.
         User currentUser = getCurrentUser();
+
+        // 2. Fetch the existing case from the database.
         Case existingCase = caseRepository.findById(caseId)
                 .orElseThrow(() -> new RuntimeException("Case not found with ID: " + caseId));
 
-        // SECURITY CHECK: A lawyer can only update a case that belongs to their own firm.
-        if (!existingCase.getFirm().getId().equals(currentUser.getFirm().getId())) {
+        // 3. Perform a robust security check.
+        // A user can only update a case if they are a member of that case.
+        // This works for both the owning Lawyer and any assigned Juniors.
+        boolean isMember = existingCase.getMembers().stream()
+                .anyMatch(member -> member.getUser().getId().equals(currentUser.getId()));
+
+        if (!isMember) {
             throw new AccessDeniedException("You do not have permission to update this case.");
         }
 
-        caseMapper.updateFromDto(caseDTO, existingCase);
-        existingCase.setUpdatedAt(Instant.now());
+        // 4. Use the mapper to apply the changes from the DTO to the entity.
+        caseMapper.updateCaseFromDto(updateRequest, existingCase);
 
+        // The @PreUpdate annotation on the Case entity will handle setting the updatedAt timestamp automatically.
+
+        // 5. Save the updated entity back to the database.
         Case updatedCase = caseRepository.save(existingCase);
-        return caseMapper.toDto(updatedCase);
+
+        // 6. Convert the final, saved entity to a response DTO and return it.
+        return caseMapper.toResponseDto(updatedCase);
     }
+    // --- ▲▲▲ ADD THIS NEW METHOD ▲▲▲ ---
 
     @Transactional
     public void archiveCase(UUID caseId) {
@@ -128,20 +195,17 @@ public class CaseService {
         Case existingCase = caseRepository.findById(caseId)
                 .orElseThrow(() -> new RuntimeException("Case not found with ID: " + caseId));
 
-        // SECURITY CHECK: A lawyer can only archive a case that belongs to their own firm.
         if (!existingCase.getFirm().getId().equals(currentUser.getFirm().getId())) {
             throw new AccessDeniedException("You do not have permission to archive this case.");
         }
 
         existingCase.setStatus(CaseStatus.ARCHIVED);
-        existingCase.setUpdatedAt(Instant.now());
         caseRepository.save(existingCase);
     }
 
-    // A private helper method to get the current, fully-hydrated User object from the database.
     private User getCurrentUser() {
         String firebaseUid = SecurityContextHolder.getContext().getAuthentication().getName();
         return userRepository.findByFirebaseUid(firebaseUid)
-                .orElseThrow(() -> new RuntimeException("Authenticated user not found in database. This should not happen."));
+                .orElseThrow(() -> new RuntimeException("Authenticated user not found in database."));
     }
 }

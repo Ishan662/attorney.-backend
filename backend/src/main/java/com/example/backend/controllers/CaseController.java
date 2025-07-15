@@ -1,6 +1,11 @@
 package com.example.backend.controllers;
 
-import com.example.backend.dto.caseDTOS.CaseDTO;
+// --- ▼▼▼ IMPORT THE NEW, SPECIFIC DTOS ▼▼▼ ---
+import com.example.backend.dto.caseDTOS.CreateCaseRequest;
+import com.example.backend.dto.caseDTOS.CaseResponseDTO;
+// --- ▲▲▲ IMPORT THE NEW, SPECIFIC DTOS ▲▲▲ ---
+
+import com.example.backend.dto.caseDTOS.UpdateCaseRequest;
 import com.example.backend.service.CaseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -12,7 +17,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/cases") // All endpoints in this controller will start with /api/cases
+@RequestMapping("/api/cases")
 public class CaseController {
 
     private final CaseService caseService;
@@ -24,71 +29,61 @@ public class CaseController {
 
     /**
      * API endpoint to create a new case.
-     * Security: Only accessible by users with the 'LAWYER' role.
-     *
-     * @param caseDTO The data for the new case from the request body.
-     * @return The created case data with a 201 CREATED status.
-     **/
+     * Accepts a CreateCaseRequest object tailored to the creation form.
+     * Returns the UUID of the newly created case.
+     */
     @PostMapping
     @PreAuthorize("hasRole('LAWYER')")
-    public ResponseEntity<CaseDTO> createCase(@RequestBody CaseDTO caseDTO) {
-        CaseDTO createdCase = caseService.createCase(caseDTO);
-        return new ResponseEntity<>(createdCase, HttpStatus.CREATED);
+    // --- ▼▼▼ CHANGE 1: UPDATE THE METHOD SIGNATURE ▼▼▼ ---
+    public ResponseEntity<UUID> createCase(@RequestBody CreateCaseRequest createCaseRequest) {
+        UUID newCaseId = caseService.createCase(createCaseRequest);
+        return new ResponseEntity<>(newCaseId, HttpStatus.CREATED);
     }
+    // --- ▲▲▲ CHANGE 1: UPDATE THE METHOD SIGNATURE ▲▲▲ ---
 
     /**
      * API endpoint to get all cases relevant to the currently logged-in user.
-     * Security: Any authenticated user can call this. The service layer is responsible
-     * for filtering the results based on the user's role (Lawyer sees all in firm,
-     * Junior/Client sees only their assigned cases).
-     *
-     * @return A list of cases the user is allowed to see.
+     * Returns a list of CaseResponseDTOs, which are safe for client consumption.
      */
     @GetMapping
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<CaseDTO>> getMyCases() {
-        List<CaseDTO> cases = caseService.getCasesForCurrentUser();
+    // --- ▼▼▼ CHANGE 2: UPDATE THE RESPONSE TYPE ▼▼▼ ---
+    public ResponseEntity<List<CaseResponseDTO>> getMyCases() {
+        List<CaseResponseDTO> cases = caseService.getCasesForCurrentUser();
         return ResponseEntity.ok(cases);
     }
+    // --- ▲▲▲ CHANGE 2: UPDATE THE RESPONSE TYPE ▲▲▲ ---
 
     /**
      * API endpoint to get a single, specific case by its ID.
-     * Security: Any authenticated user can attempt this, but the service layer
-     * will perform a strict check to ensure they are either the firm owner or a member of that specific case.
-     *
-     * @param caseId The UUID of the case to retrieve.
-     * @return The specific case data.
+     * Returns a single CaseResponseDTO.
      */
     @GetMapping("/{caseId}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<CaseDTO> getCaseById(@PathVariable UUID caseId) {
-        CaseDTO caseDTO = caseService.getCaseById(caseId);
-        return ResponseEntity.ok(caseDTO);
+    // --- ▼▼▼ CHANGE 3: UPDATE THE RESPONSE TYPE ▼▼▼ ---
+    public ResponseEntity<CaseResponseDTO> getCaseById(@PathVariable UUID caseId) {
+        CaseResponseDTO caseResponseDTO = caseService.getCaseById(caseId);
+        return ResponseEntity.ok(caseResponseDTO);
     }
+    // --- ▲▲▲ CHANGE 3: UPDATE THE RESPONSE TYPE ▲▲▲ ---
+
+//    /**
+//     * API endpoint to update an existing case.
+//     * This should be updated to use a specific UpdateCaseRequest DTO in a future step.
+//     */
+//    @PutMapping("/{caseId}")
+//    @PreAuthorize("hasRole('LAWYER')")
+//    // --- ▼▼▼ CHANGE 4: UPDATE THE RESPONSE TYPE (and acknowledge the input type should also change) ▼▼▼ ---
+//    public ResponseEntity<CaseResponseDTO> updateCase(@PathVariable UUID caseId, @RequestBody /* UpdateCaseRequest updateRequest */ Object requestBody) {
+//        // CaseResponseDTO updatedCase = caseService.updateCase(caseId, updateRequest);
+//        // return ResponseEntity.ok(updatedCase);
+//        // For now, we'll leave this unimplemented until we create the UpdateCaseRequest DTO.
+//        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+//    }
+//    // --- ▲▲▲ CHANGE 4: UPDATE THE RESPONSE TYPE ▲▲▲ ---
 
     /**
-     * API endpoint to update an existing case.
-     * Security: Only accessible by users with the 'LAWYER' role. The service layer
-     * will further verify that the lawyer owns the case they are trying to update.
-     *
-     * @param caseId  The ID of the case to update.
-     * @param caseDTO The new data for the case.
-     * @return The updated case data.
-     */
-    @PutMapping("/{caseId}")
-    @PreAuthorize("hasRole('LAWYER')")
-    public ResponseEntity<CaseDTO> updateCase(@PathVariable UUID caseId, @RequestBody CaseDTO caseDTO) {
-        CaseDTO updatedCase = caseService.updateCase(caseId, caseDTO);
-        return ResponseEntity.ok(updatedCase);
-    }
-
-    /**
-     * API endpoint to "soft-delete" (archive) a case.
-     * Security: Only accessible by users with the 'LAWYER' role. The service layer
-     * will verify ownership before archiving.
-     *
-     * @param caseId The ID of the case to archive.
-     * @return An empty response with a 204 No Content status.
+     * API endpoint to "soft-delete" (archive) a case. No changes needed here.
      */
     @DeleteMapping("/{caseId}")
     @PreAuthorize("hasRole('LAWYER')")
@@ -96,4 +91,22 @@ public class CaseController {
         caseService.archiveCase(caseId);
         return ResponseEntity.noContent().build();
     }
+
+    /**
+     * API endpoint to update an existing case.
+     * Security: Only accessible by users with the 'LAWYER' or 'JUNIOR' role. The service layer
+     * will further verify that the user is a member of the case.
+     */
+    @PutMapping("/{caseId}")
+    // You might want to allow Juniors to update cases as well
+    @PreAuthorize("hasAnyRole('LAWYER', 'JUNIOR')")
+    // --- ▼▼▼ UPDATE THIS METHOD ▼▼▼ ---
+    public ResponseEntity<CaseResponseDTO> updateCase(
+            @PathVariable UUID caseId,
+            @RequestBody UpdateCaseRequest updateRequest) {
+
+        CaseResponseDTO updatedCase = caseService.updateCase(caseId, updateRequest);
+        return ResponseEntity.ok(updatedCase);
+    }
+
 }
