@@ -1,8 +1,7 @@
 package com.example.backend.controllers;
 
 // Import the DTO, not the Entity
-import com.example.backend.dto.UserDTO;
-import com.example.backend.model.User;
+import com.example.backend.dto.userDTO.UserDTO;
 import com.example.backend.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -38,11 +37,26 @@ public class AuthController {
         return ResponseEntity.ok(userDTO);
     }
 
+    @GetMapping("/status")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Map<String, Object>> getLoginStatus() {
+        Map<String, Object> statusResponse = authService.getLoginStatusForCurrentUser();
+        return ResponseEntity.ok(statusResponse);
+    }
+
     @PostMapping("/google-sync")
     public ResponseEntity<UserDTO> syncWithGoogle(@RequestHeader("Authorization") String authorizationHeader) {
         String firebaseToken = extractToken(authorizationHeader);
         UserDTO userDto = authService.processGoogleLogin(firebaseToken);
         return ResponseEntity.ok(userDto);
+    }
+
+    // this is for the activating account
+    @PostMapping("/activate-account")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<UserDTO> activateUserAccount() {
+        UserDTO activatedUser = authService.activateCurrentUserAccount();
+        return ResponseEntity.ok(activatedUser);
     }
 
     private String extractToken(String authorizationHeader) {

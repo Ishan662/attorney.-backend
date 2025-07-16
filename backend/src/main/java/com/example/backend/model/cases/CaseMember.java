@@ -1,6 +1,7 @@
 // >> In a new file: CaseMember.java
-package com.example.backend.model;
+package com.example.backend.model.cases;
 
+import com.example.backend.model.user.User;
 import jakarta.persistence.*;
 import java.time.Instant;
 

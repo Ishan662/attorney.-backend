@@ -1,8 +1,8 @@
 // >> In a new file: CaseMemberRepository.java
 package com.example.backend.repositories;
 
-import com.example.backend.model.CaseMember;
-import com.example.backend.model.CaseMemberId;
+import com.example.backend.model.cases.CaseMember;
+import com.example.backend.model.cases.CaseMemberId;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

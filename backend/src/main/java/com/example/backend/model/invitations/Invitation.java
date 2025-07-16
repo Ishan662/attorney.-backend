@@ -1,5 +1,8 @@
-package com.example.backend.model;
+package com.example.backend.model.invitations;
 
+import com.example.backend.model.AppRole;
+import com.example.backend.model.firm.Firm;
+import com.example.backend.model.user.User;
 import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.UUID;

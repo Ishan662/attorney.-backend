@@ -1,4 +1,4 @@
-package com.example.backend.dto;
+package com.example.backend.dto.InviteDTOS;
 
 public class FinalizeInvitationRequest {
     private String invitationToken;
