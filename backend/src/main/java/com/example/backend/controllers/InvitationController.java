@@ -23,7 +23,7 @@ public class InvitationController {
     /*
      * Endpoint for a Lawyer to create and send a new invitation.
      */
-    @PostMapping()
+    @PostMapping("/create-invitation")
     @PreAuthorize("hasRole('LAWYER')")
     public ResponseEntity<Void> createInvitation(@RequestBody InviteUserRequest inviteRequest){
         // The service layer will handle all the logic of creating the placeholder user,
