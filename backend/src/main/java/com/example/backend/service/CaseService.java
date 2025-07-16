@@ -1,11 +1,13 @@
 package com.example.backend.service;
 
 // DTOs
+import com.example.backend.dto.caseDTOS.CaseDetailDTO;
 import com.example.backend.dto.caseDTOS.CaseResponseDTO;
 import com.example.backend.dto.caseDTOS.CreateCaseRequest;
 
 // Mapper and Model classes
 import com.example.backend.dto.caseDTOS.UpdateCaseRequest;
+import com.example.backend.mapper.CaseDetailMapper;
 import com.example.backend.mapper.CaseMapper;
 import com.example.backend.model.AppRole;
 import com.example.backend.model.cases.*;
@@ -41,15 +43,17 @@ public class CaseService {
     private final CaseMapper caseMapper;
     private final HearingRepository hearingRepository;
     private final CaseMemberRepository caseMemberRepository;
+    private final CaseDetailMapper caseDetailMapper;
 
     @Autowired
     public CaseService(CaseRepository caseRepository, UserRepository userRepository, CaseMapper caseMapper,
-                       HearingRepository hearingRepository, CaseMemberRepository caseMemberRepository) {
+                       HearingRepository hearingRepository, CaseMemberRepository caseMemberRepository, CaseDetailMapper caseDetailMapper) {
         this.caseRepository = caseRepository;
         this.userRepository = userRepository;
         this.caseMapper = caseMapper;
         this.hearingRepository = hearingRepository;
         this.caseMemberRepository = caseMemberRepository;
+        this.caseDetailMapper = caseDetailMapper;
     }
 
     // --- ▼▼▼ THIS IS THE REFACTORED METHOD WITH SIMPLIFIED LOGIC ▼▼▼ ---
@@ -136,24 +140,27 @@ public class CaseService {
                 .collect(Collectors.toList());
     }
 
-    public CaseResponseDTO getCaseById(UUID caseId) {
+    public CaseDetailDTO getCaseById(UUID caseId) {
         User currentUser = getCurrentUser();
         Case aCase = caseRepository.findById(caseId)
                 .orElseThrow(() -> new RuntimeException("Case not found with ID: " + caseId));
 
+        // This security logic is correct and does not need to change.
+        boolean hasAccess;
         if (currentUser.getRole() == AppRole.LAWYER) {
-            if (!aCase.getFirm().getId().equals(currentUser.getFirm().getId())) {
-                throw new AccessDeniedException("You do not have permission to view this case.");
-            }
-        } else {
-            boolean isMember = aCase.getMembers().stream()
+            hasAccess = aCase.getFirm().getId().equals(currentUser.getFirm().getId());
+        } else { // For Junior or Client
+            hasAccess = aCase.getMembers().stream()
                     .anyMatch(member -> member.getUser().getId().equals(currentUser.getId()));
-            if (!isMember) {
-                throw new AccessDeniedException("You do not have permission to view this case.");
-            }
         }
 
-        return caseMapper.toResponseDto(aCase);
+        if (!hasAccess) {
+            throw new AccessDeniedException("You do not have permission to view this case.");
+        }
+
+        // The only change is here: we now call the new caseDetailMapper
+        // to create the rich DTO for the details page.
+        return caseDetailMapper.toDetailDto(aCase);
     }
 
     // --- ▼▼▼ ADD THIS NEW METHOD ▼▼▼ ---

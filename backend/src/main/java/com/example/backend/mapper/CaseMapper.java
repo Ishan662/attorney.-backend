@@ -3,8 +3,16 @@ package com.example.backend.mapper;
 // Import the new response DTO
 import com.example.backend.dto.caseDTOS.CaseResponseDTO;
 import com.example.backend.dto.caseDTOS.UpdateCaseRequest;
+import com.example.backend.model.AppRole;
 import com.example.backend.model.cases.Case;
+import com.example.backend.model.cases.PaymentStatus;
+import com.example.backend.model.hearing.Hearing;
+import com.example.backend.model.hearing.HearingStatus;
 import org.springframework.stereotype.Component;
+
+import java.time.Instant;
+import java.util.Comparator;
+import java.util.Optional;
 
 @Component
 public class CaseMapper {
@@ -45,13 +53,40 @@ public class CaseMapper {
         dto.setStatus(entity.getStatus());
         dto.setAgreedFee(entity.getAgreedFee());
         dto.setPaymentStatus(entity.getPaymentStatus());
+//        dto.setPaymentStatus(PaymentStatus.valueOf(entity.getPaymentStatus().toString().replace('_', ' ')));
+
+
+        // 1. Map the Case Owner's Name
+        if (entity.getCreatedBy() != null) {
+            String ownerName = (entity.getCreatedBy().getFirstName() + " " + entity.getCreatedBy().getLastName()).trim();
+            dto.setOwner(ownerName);
+        }
+
+        // 2. Find and Map the Next Upcoming Hearing Date
+        Optional<Hearing> nextHearing = entity.getHearings().stream()
+                .filter(h -> h.getStatus() == HearingStatus.PLANNED && h.getHearingDate().isAfter(Instant.now()))
+                .min(Comparator.comparing(Hearing::getHearingDate));
+
+        // If a next hearing is found, set its date in the DTO
+        nextHearing.ifPresent(hearing -> dto.setNextHearing(hearing.getHearingDate()));
+
+        // 3. Find and Map the Name of ONE Assigned Junior
+        Optional<String> juniorName = entity.getMembers().stream()
+                .map(member -> (member.getUser().getFirstName() + " " + member.getUser().getLastName()).trim())
+                .findFirst(); // We just grab the first junior we find for the list view
+
+        // If a junior is found, set their name in the DTO
+        juniorName.ifPresent(dto::setJunior);
+
 
         // Auditing Timestamps
         dto.setCreatedAt(entity.getCreatedAt());
         dto.setUpdatedAt(entity.getUpdatedAt());
 
+
         return dto;
     }
+
 
     // --- ▼▼▼ ADD THIS NEW METHOD ▼▼▼ ---
     /**

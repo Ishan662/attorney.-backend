@@ -1,6 +1,7 @@
 package com.example.backend.controllers;
 
 // --- ▼▼▼ IMPORT THE NEW, SPECIFIC DTOS ▼▼▼ ---
+import com.example.backend.dto.caseDTOS.CaseDetailDTO;
 import com.example.backend.dto.caseDTOS.CreateCaseRequest;
 import com.example.backend.dto.caseDTOS.CaseResponseDTO;
 // --- ▲▲▲ IMPORT THE NEW, SPECIFIC DTOS ▲▲▲ ---
@@ -61,8 +62,8 @@ public class CaseController {
     @GetMapping("/{caseId}")
     @PreAuthorize("isAuthenticated()")
     // --- ▼▼▼ CHANGE 3: UPDATE THE RESPONSE TYPE ▼▼▼ ---
-    public ResponseEntity<CaseResponseDTO> getCaseById(@PathVariable UUID caseId) {
-        CaseResponseDTO caseResponseDTO = caseService.getCaseById(caseId);
+    public ResponseEntity<CaseDetailDTO> getCaseById(@PathVariable UUID caseId) {
+        CaseDetailDTO caseResponseDTO = caseService.getCaseById(caseId);
         return ResponseEntity.ok(caseResponseDTO);
     }
     // --- ▲▲▲ CHANGE 3: UPDATE THE RESPONSE TYPE ▲▲▲ ---
