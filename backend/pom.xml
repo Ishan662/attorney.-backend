@@ -104,7 +104,11 @@
 			<version>3.7.1</version> <!-- Use the latest version compatible with your Hibernate -->
 		</dependency>
 
-
+		<dependency>
+			<groupId>com.twilio.sdk</groupId>
+			<artifactId>twilio</artifactId>
+			<version>9.2.4</version> <!-- Use the latest version -->
+		</dependency>
 
 	</dependencies>
 

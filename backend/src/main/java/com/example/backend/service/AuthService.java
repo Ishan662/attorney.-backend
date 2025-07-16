@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -50,11 +51,10 @@ public class AuthService {
         // --- ▼▼▼ CHANGE: CALL THE NEW HELPER METHOD ▼▼▼ ---
         // The logic is now delegated to the helper method.
         User newUser = createNewLawyerAndFirm(decodedToken, profileData);
-        newUser.setStatus(UserStatus.ACTIVE);
+        newUser.setStatus(UserStatus.PENDING_PHONE_VERIFICATION);
         User savedUser = userRepository.save(newUser);
 
         subscriptionService.createTrialSubscriptionForFirm(savedUser.getFirm());
-        // TODO: Create TRIAL subscription
 
         return userMapper.toUserDTO(savedUser);
     }
@@ -64,6 +64,34 @@ public class AuthService {
         User currentUser = userRepository.findByFirebaseUid(firebaseUid)
                 .orElseThrow(() -> new UsernameNotFoundException("Authenticated user not found in database."));
         return userMapper.toUserDTO(currentUser);
+    }
+
+    public Map<String, Object> getLoginStatusForCurrentUser() {
+        String firebaseUid = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        // We query for the full user object here because we need both status and phone number.
+        User currentUser = userRepository.findByFirebaseUid(firebaseUid)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found for status check."));
+
+        // We build a Map to return as our JSON object.
+        Map<String, Object> response = new HashMap<>();
+        response.put("status", currentUser.getStatus());
+        response.put("phoneNumber", currentUser.getPhoneNumber());
+        response.put("fullName", currentUser.getFirstName() + " " + currentUser.getLastName());
+
+        return response;
+    }
+
+    @Transactional
+    public UserDTO activateCurrentUserAccount() {
+        String firebaseUid = SecurityContextHolder.getContext().getAuthentication().getName();
+        User userToActivate = userRepository.findByFirebaseUid(firebaseUid)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found."));
+        if (userToActivate.getStatus() == UserStatus.PENDING_PHONE_VERIFICATION) {
+            userToActivate.setStatus(UserStatus.ACTIVE);
+            return userMapper.toUserDTO(userRepository.save(userToActivate));
+        }
+        return userMapper.toUserDTO(userToActivate);
     }
 
     @Transactional
@@ -120,7 +148,7 @@ public class AuthService {
         newUser.setEmail(decodedToken.getEmail());
 //        assert profileData != null;
         if (profileData != null) {
-            newUser.setPhoneNumber(Integer.valueOf(profileData.get("phoneNumber")));
+            newUser.setPhoneNumber(profileData.get("phoneNumber"));
         }
         newUser.setRole(AppRole.LAWYER);
         newUser.setFirm(newFirm);
