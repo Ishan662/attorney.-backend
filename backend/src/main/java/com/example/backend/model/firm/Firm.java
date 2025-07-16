@@ -1,4 +1,4 @@
-package com.example.backend.model;
+package com.example.backend.model.firm;
 
 //  ▼▼▼ CHANGE THIS BLOCK ▼▼▼
 import jakarta.persistence.Column;

@@ -1,6 +1,8 @@
-// >> In your existing file: FirebaseTokenFilter.java
+// >> In your existing file: config/FirebaseTokenFilter.java
 package com.example.backend.config;
 
+import com.example.backend.model.UserStatus;
+import com.example.backend.repositories.UserRepository; // Import UserRepository
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
@@ -14,30 +16,25 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException; // Import this exception
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
 @Component
 public class FirebaseTokenFilter extends OncePerRequestFilter {
 
     private final UserDetailsService userDetailsService;
-
-    // --- ▼▼▼ ADD THIS LIST OF PUBLIC PATHS ▼▼▼ ---
-    // A list of paths that should be allowed to bypass this filter's main logic.
-    private static final List<String> PUBLIC_PATHS = List.of(
-            "/api/auth/register-lawyer",
-            "/api/invitations/finalize"
-            // You can add more public paths here if needed, e.g., /api/auth/google-sync
-    );
-    // --- ▲▲▲ ADD THIS LIST OF PUBLIC PATHS ▲▲▲ ---
+    // --- ▼▼▼ INJECT THE USER REPOSITORY DIRECTLY ▼▼▼ ---
+    private final UserRepository userRepository;
 
     @Autowired
-    public FirebaseTokenFilter(UserDetailsService userDetailsService) {
+    public FirebaseTokenFilter(UserDetailsService userDetailsService, UserRepository userRepository) {
         this.userDetailsService = userDetailsService;
+        this.userRepository = userRepository; // We need this for the optimized status check
     }
 
     @Override
@@ -46,60 +43,64 @@ public class FirebaseTokenFilter extends OncePerRequestFilter {
                                     @NonNull FilterChain filterChain)
             throws ServletException, IOException {
 
-        // --- ▼▼▼ ADD THIS NEW CHECK AT THE TOP ▼▼▼ ---
-        // Check if the request path is in our list of public paths.
-        if (isPublicPath(request)) {
-            // If it is a public path, we do NOTHING and just pass the request
-            // down the filter chain. This prevents the filter from trying to
-            // authenticate a user who is in the process of registering.
-            filterChain.doFilter(request, response);
-            return;
-        }
-        // --- ▲▲▲ ADD THIS NEW CHECK AT THE TOP ▲▲▲ ---
-
-
         final String header = request.getHeader("Authorization");
 
+        // 1. If no token, pass through. Spring Security will handle public/protected endpoints.
         if (header == null || !header.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
 
         String idToken = header.substring(7);
+        FirebaseToken decodedToken;
 
         try {
-            FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(idToken);
-            String uid = decodedToken.getUid();
-
-            // The user must exist in our DB for any non-public endpoint
-            UserDetails userDetails = userDetailsService.loadUserByUsername(uid);
-
-            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                    userDetails, null, userDetails.getAuthorities());
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-
-        } catch (FirebaseAuthException | UsernameNotFoundException | IllegalArgumentException e) {
-            // If the token is invalid or the user is not found, we clear the context.
-            // Spring Security will then deny access because the endpoint is protected.
-            // This is correct behavior for protected endpoints.
-            SecurityContextHolder.clearContext();
-            // We can optionally set a 401 Unauthorized status here to be more explicit
-            // response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            // return; // uncomment if you add the line above
+            decodedToken = FirebaseAuth.getInstance().verifyIdToken(idToken);
+        } catch (FirebaseAuthException e) {
+            // Token is invalid (expired, bad signature, etc.)
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("Invalid Firebase Token");
+            return;
         }
 
+        String uid = decodedToken.getUid();
+
+        // 2. Check if the user is already fully authenticated in this request's context
+        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+
+            // --- ▼▼▼ THIS IS THE NEW, SIMPLIFIED LOGIC ▼▼▼ ---
+
+            // ALWAYS try to load the user's full details. This is where the check for
+            // user status (ACTIVE vs. PENDING) happens.
+            try {
+                UserDetails userDetails = this.userDetailsService.loadUserByUsername(uid);
+
+                // If the line above succeeds, it means the user's status is ACTIVE.
+                // We can create a full authentication object with all their roles/authorities.
+                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                        userDetails, null, userDetails.getAuthorities());
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            } catch (UsernameNotFoundException e) {
+                // This exception is thrown by our UserDetailsService if the user status is NOT 'ACTIVE'.
+                // This is our signal that the user is in a "partially authenticated" state.
+                // In this state, they have proven their identity (valid token) but are not yet fully privileged.
+
+                // We create a "lightweight" authentication object. It proves they are authenticated
+                // but contains NO roles or special authorities.
+                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                        uid, null, List.of()); // An empty list of authorities
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+
+                System.out.println("User is authenticated but not active. UID: " + uid + ". Status likely pending.");
+            }
+
+            // --- ▲▲▲ THIS IS THE NEW, SIMPLIFIED LOGIC ▲▲▲ ---
+        }
+
+        // 3. Continue the filter chain.
+        // Now, Spring Security's AuthorizationFilter will run AFTER us. It will check the
+        // rules in SecurityConfig against the Authentication object we just created.
         filterChain.doFilter(request, response);
     }
-
-    // --- ▼▼▼ ADD THIS NEW HELPER METHOD ▼▼▼ ---
-    /**
-     * Helper method to check if the current request path is one of the defined public paths.
-     * @param request The incoming servlet request.
-     * @return true if the path is public, false otherwise.
-     */
-    private boolean isPublicPath(HttpServletRequest request) {
-        String path = request.getServletPath();
-        return PUBLIC_PATHS.stream().anyMatch(publicPath -> publicPath.equals(path));
-    }
-    // --- ▲▲▲ ADD THIS NEW HELPER METHOD ▲▲▲ ---
 }

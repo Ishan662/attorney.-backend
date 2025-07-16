@@ -1,6 +1,6 @@
 package com.example.backend.service;
 
-import com.example.backend.model.User;
+import com.example.backend.model.user.User;
 import com.example.backend.model.UserStatus; // <-- Make sure to import the new enum
 import com.example.backend.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;

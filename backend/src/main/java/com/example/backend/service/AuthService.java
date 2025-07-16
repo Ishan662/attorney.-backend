@@ -1,11 +1,11 @@
 // >> In your existing file: AuthService.java
 package com.example.backend.service;
 
-import com.example.backend.dto.UserDTO;
+import com.example.backend.dto.userDTO.UserDTO;
 import com.example.backend.mapper.UserMapper;
 import com.example.backend.model.AppRole;
-import com.example.backend.model.Firm;
-import com.example.backend.model.User;
+import com.example.backend.model.firm.Firm;
+import com.example.backend.model.user.User;
 import com.example.backend.model.UserStatus;
 import com.example.backend.repositories.FirmRepository;
 import com.example.backend.repositories.UserRepository;
@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -28,12 +29,14 @@ public class AuthService {
     private final UserRepository userRepository;
     private final FirmRepository firmRepository;
     private final UserMapper userMapper;
+    private final SubscriptionService subscriptionService;
 
     @Autowired
-    public AuthService(UserRepository userRepository, FirmRepository firmRepository, UserMapper userMapper) {
+    public AuthService(UserRepository userRepository, FirmRepository firmRepository, UserMapper userMapper, SubscriptionService subscriptionService) {
         this.userRepository = userRepository;
         this.firmRepository = firmRepository;
         this.userMapper = userMapper;
+        this.subscriptionService = subscriptionService;
     }
 
     @Transactional
@@ -48,10 +51,10 @@ public class AuthService {
         // --- ▼▼▼ CHANGE: CALL THE NEW HELPER METHOD ▼▼▼ ---
         // The logic is now delegated to the helper method.
         User newUser = createNewLawyerAndFirm(decodedToken, profileData);
-        newUser.setStatus(UserStatus.ACTIVE);
+        newUser.setStatus(UserStatus.PENDING_PHONE_VERIFICATION);
         User savedUser = userRepository.save(newUser);
 
-        // TODO: Create TRIAL subscription
+        subscriptionService.createTrialSubscriptionForFirm(savedUser.getFirm());
 
         return userMapper.toUserDTO(savedUser);
     }
@@ -61,6 +64,34 @@ public class AuthService {
         User currentUser = userRepository.findByFirebaseUid(firebaseUid)
                 .orElseThrow(() -> new UsernameNotFoundException("Authenticated user not found in database."));
         return userMapper.toUserDTO(currentUser);
+    }
+
+    public Map<String, Object> getLoginStatusForCurrentUser() {
+        String firebaseUid = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        // We query for the full user object here because we need both status and phone number.
+        User currentUser = userRepository.findByFirebaseUid(firebaseUid)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found for status check."));
+
+        // We build a Map to return as our JSON object.
+        Map<String, Object> response = new HashMap<>();
+        response.put("status", currentUser.getStatus());
+        response.put("phoneNumber", currentUser.getPhoneNumber());
+        response.put("fullName", currentUser.getFirstName() + " " + currentUser.getLastName());
+
+        return response;
+    }
+
+    @Transactional
+    public UserDTO activateCurrentUserAccount() {
+        String firebaseUid = SecurityContextHolder.getContext().getAuthentication().getName();
+        User userToActivate = userRepository.findByFirebaseUid(firebaseUid)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found."));
+        if (userToActivate.getStatus() == UserStatus.PENDING_PHONE_VERIFICATION) {
+            userToActivate.setStatus(UserStatus.ACTIVE);
+            return userMapper.toUserDTO(userRepository.save(userToActivate));
+        }
+        return userMapper.toUserDTO(userToActivate);
     }
 
     @Transactional
@@ -84,6 +115,8 @@ public class AuthService {
             User newLawyer = createNewLawyerAndFirm(decodedToken, null);
             newLawyer.setStatus(UserStatus.ACTIVE);
             User savedUser = userRepository.save(newLawyer);
+
+            subscriptionService.createTrialSubscriptionForFirm(savedUser.getFirm());
 
             // TODO: Create TRIAL subscription
 
@@ -113,6 +146,10 @@ public class AuthService {
         User newUser = new User();
         newUser.setFirebaseUid(decodedToken.getUid());
         newUser.setEmail(decodedToken.getEmail());
+//        assert profileData != null;
+        if (profileData != null) {
+            newUser.setPhoneNumber(profileData.get("phoneNumber"));
+        }
         newUser.setRole(AppRole.LAWYER);
         newUser.setFirm(newFirm);
         parseAndSetUserName(newUser, fullNameFromToken, profileData); // Use existing helper to set name

@@ -1,6 +1,6 @@
 package com.example.backend.repositories;
 
-import com.example.backend.model.Invitation;
+import com.example.backend.model.invitations.Invitation;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

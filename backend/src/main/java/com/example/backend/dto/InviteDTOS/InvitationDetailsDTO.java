@@ -1,5 +1,5 @@
 // >> Create this new file: dto/InvitationDetailsDTO.java
-package com.example.backend.dto;
+package com.example.backend.dto.InviteDTOS;
 
 public class InvitationDetailsDTO {
     private String email;

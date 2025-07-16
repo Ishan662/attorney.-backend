@@ -1,10 +1,9 @@
 package com.example.backend.controllers;
 
 
-import com.example.backend.dto.FinalizeInvitationRequest;
-import com.example.backend.dto.InvitationDetailsDTO;
-import com.example.backend.dto.InviteUserRequest;
-import com.example.backend.model.Invitation;
+import com.example.backend.dto.InviteDTOS.FinalizeInvitationRequest;
+import com.example.backend.dto.InviteDTOS.InvitationDetailsDTO;
+import com.example.backend.dto.InviteDTOS.InviteUserRequest;
 import com.example.backend.service.InvitationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -24,7 +23,7 @@ public class InvitationController {
     /*
      * Endpoint for a Lawyer to create and send a new invitation.
      */
-    @PostMapping()
+    @PostMapping("/create-invitation")
     @PreAuthorize("hasRole('LAWYER')")
     public ResponseEntity<Void> createInvitation(@RequestBody InviteUserRequest inviteRequest){
         // The service layer will handle all the logic of creating the placeholder user,
