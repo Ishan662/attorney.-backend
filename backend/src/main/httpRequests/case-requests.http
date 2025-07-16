@@ -1,0 +1,104 @@
+### =================================================================
+### Case CRUD Endpoints - Test File
+### =================================================================
+
+### File-level variable for the authentication token.
+### !! IMPORTANT !!
+### Replace this placeholder with a REAL, valid Firebase ID Token from a logged-in LAWYER user.
+@auth_token = Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IjQ3YWU0OWM0YzlkM2ViODVhNTI1NDA3MmMzMGQyZThlNzY2MWVmZTEiLCJ0eXAiOiJKV1QifQ.eyJuYW1lIjoiSGF6ZWwgQS5Sb2JlcnRzb24iLCJwaWN0dXJlIjoiaHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jTFBYY0lmZ2wxZl84VWhCQkUxV2NMUHJRTHBNUjlRR25BbkFKNTRmc29XMXJ3WFBBPXM5Ni1jIiwiaXNzIjoiaHR0cHM6Ly9zZWN1cmV0b2tlbi5nb29nbGUuY29tL2F0dG9ybmV5LTQ1ODYyIiwiYXVkIjoiYXR0b3JuZXktNDU4NjIiLCJhdXRoX3RpbWUiOjE3NTE4ODczMzcsInVzZXJfaWQiOiJJWU9xSmVMM0ZXZnlTNDQ3R29TN3ZFNk43MlQyIiwic3ViIjoiSVlPcUplTDNGV2Z5UzQ0N0dvUzd2RTZONzJUMiIsImlhdCI6MTc1MTg4NzMzNywiZXhwIjoxNzUxODkwOTM3LCJlbWFpbCI6ImhlemVscm9iZXJ0em9uMjFAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImZpcmViYXNlIjp7ImlkZW50aXRpZXMiOnsiZ29vZ2xlLmNvbSI6WyIxMDE3NzcwODIyMjU1MDA5ODcxMjMiXSwiZW1haWwiOlsiaGV6ZWxyb2JlcnR6b24yMUBnbWFpbC5jb20iXX0sInNpZ25faW5fcHJvdmlkZXIiOiJnb29nbGUuY29tIn19.cJJWQUq1wrAfriRhQ4xIMCrxcJfBOyXORkn0y74DojFC7ycvChpQV4yko3uRnFcvz7PkKye4RL6-CKUg4WhycpqJ6jY_lKm5fsuzYJFO6ceXrrddFC9na2bFsbhZPQ-GGJ6fdZoVHcQTvDBZpTCs-WO4g_Ib-QVCP-VBTj3Y63u4ojt34LaeOKS-nNe6C7AlVE0IYcAuyRi8-ZJdMlzb8KaWDm1Dn1Tr2ABdCii4xeSUFOWUw0R06omXA-q1gk3AG6E-tGJsHn8FQQheEETIjoE9BSQFvvpcEGyfturVQGFxLLiw_q_djGPIYPzEWooOsCGlFXqUv9novyf4-jMtkQ
+
+
+@case_id = 837b84b1-9828-47c9-8a27-4fb62ad3b72c
+### =================================================================
+### 1. Create a New Case (POST /api/cases)
+### =================================================================
+# This request tests the new case creation flow using the `CreateCaseRequest` DTO.
+# It simulates the data coming from your UI form.
+# It will only succeed if the auth_token belongs to a 'LAWYER'.
+POST http://localhost:8080/api/cases
+Content-Type: application/json
+Authorization: {{auth_token}}
+
+{
+  "clientName": "John Smith",
+  "clientPhone": "555-123-4567",
+  "clientEmail": "john.smith.client@example.com",
+  "opposingPartyName": "Jones Construction Inc.",
+  "caseNumber": "CIV-2024-1",
+  "court": "District Court of Colombo",
+  "initialHearingDate": "2024-12-15",
+  "description": "Initial dispute over contract completion for the library project.",
+  "agreedFee": 5000.00,
+  "paymentStatus": "NOT_INVOICED",
+  "associatedJuniorId": "c8fc293f-144a-4ed5-aa7b-b513352015da"
+}
+
+### To test assigning a junior at creation, first get a junior's UUID from your DB
+### and paste it here, removing the quotes:
+# "associatedJuniorId": "paste-junior-uuid-here",
+
+
+> {%
+    // This script will capture the ID of the newly created case
+    // and store it in a variable named 'case_id' for subsequent requests.
+    client.global.set("case_id", response.body);
+%}
+
+
+### =================================================================
+### 2. Get All Cases for Current User (GET /api/cases)
+### =================================================================
+# This request fetches all non-archived cases accessible to the user.
+# - If the token is from a LAWYER, it returns all cases in their firm.
+# - If the token is from a JUNIOR/CLIENT, it only returns their assigned cases.
+# The response will be a list of `CaseResponseDTO` objects.
+GET http://localhost:8080/api/cases
+Authorization: {{auth_token}}
+
+
+### =================================_================================
+### 3. Get a Single Case by ID (GET /api/cases/{id})
+### =================================================================
+# This request fetches one specific case using the ID captured from the create request.
+# It will only succeed if the user has permission to view this specific case.
+# The response will be a single `CaseResponseDTO`.
+GET http://localhost:8080/api/cases/{{case_id}}
+Authorization: {{auth_token}}
+
+
+### =================================================================
+### 4. Update an Existing Case (PUT /api/cases/{id})
+### =================================================================
+# This endpoint is currently marked as NOT_IMPLEMENTED in our controller.
+# This request is a placeholder for when you create the `UpdateCaseRequest` DTO.
+# Running it will result in a 501 Not Implemented error, which is expected.
+
+
+PUT http://localhost:8080/api/cases/{{case_id}}
+Content-Type: application/json
+Authorization: {{auth_token}}
+
+{
+  "description": "Updated description: Awaiting discovery documents.",
+  "status": "IN_PROGRESS",
+  "paymentStatus": "PENDING_PAYMENT"
+}
+
+
+### =================================================================
+### 5. Archive (Soft-Delete) a Case (DELETE /api/cases/{id})
+### =================================================================
+# This request changes the status of a case to 'ARCHIVED'.
+# It will only succeed if the auth_token belongs to a LAWYER who owns the case.
+DELETE http://localhost:8080/api/cases/{{case_id}}
+Authorization: {{auth_token}}
+
+
+### =================================================================
+### 6. Verify Case is Archived (GET /api/cases)
+### =================================================================
+# After running the DELETE request, run this GET request again.
+# The response list should NO LONGER include the case you just archived.
+# This confirms your soft-delete filtering in the service layer is working.
+GET http://localhost:8080/api/cases
+Authorization: {{auth_token}}

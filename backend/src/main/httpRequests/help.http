@@ -1,0 +1,6 @@
+### GET request to example server
+GET https://examples.http-client.intellij.net/get
+    ?generated-in=IntelliJ IDEA
+###
+
+## Can use these files to test endpoints that are needed for test your endpoints without using postman or other one.
