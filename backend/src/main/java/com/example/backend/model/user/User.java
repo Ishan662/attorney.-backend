@@ -38,8 +38,11 @@ public class User {
     @Column(unique = true, nullable = false)
     private String email;
 
-    @Column(unique = true)
-    private Integer phoneNumber;
+//    @Column(unique = true)
+//    private Integer phoneNumber;
+
+    @Column
+    private String phoneNumber;
 
     @Column(length = 100)
     private String firstName;
@@ -61,11 +64,11 @@ public class User {
     @Column(nullable = false)
     private Instant createdAt = Instant.now();
 
-    public Integer getPhoneNumber() {
+    public String getPhoneNumber() {
         return phoneNumber;
     }
 
-    public void setPhoneNumber(Integer phoneNumber) {
+    public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
     }
 

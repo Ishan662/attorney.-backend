@@ -48,8 +48,19 @@ public class SecurityConfig {
 
                 // Define authorization rules for our endpoints
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers("/api/auth/**", "/api/invitations/details", "/api/invitations/finalize").permitAll()
-                        .requestMatchers("/api/**", "/api/invitations/finalize").authenticated()
+                        .requestMatchers(
+                                "/api/auth/register-lawyer",
+                                "/api/invitations/finalize",
+                                "/api/invitations/details"
+                        ).permitAll()
+                        .requestMatchers(
+                                "/api/auth/status",
+                                "/api/auth/activate-account",
+                                "/api/auth/google-sync",
+                                "/api/otp/send",
+                                "/api/otp/verify"
+                        ).authenticated()
+                        .requestMatchers("/api/**").authenticated()
                         .anyRequest().denyAll()
                 )
 

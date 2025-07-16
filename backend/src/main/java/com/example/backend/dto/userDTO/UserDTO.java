@@ -1,6 +1,8 @@
 package com.example.backend.dto.userDTO;
 
 import com.example.backend.model.AppRole;
+import com.example.backend.model.UserStatus;
+
 import java.util.UUID;
 
 // This is a simple data-holding class. It has no JPA annotations.
@@ -10,18 +12,27 @@ public class UserDTO {
     private String email;
     private String firstName;
     private String lastName;
-    private Integer phoneNumber;
+//    private Integer phoneNumber;
+    private String phoneNumber;
     private String fullName; // We can pre-calculate this for the frontend's convenience
     private AppRole role;
     private UUID firmId;
     private String firmName;
+    private UserStatus status;
 
+    public UserStatus getStatus() {
+        return status;
+    }
 
-    public Integer getPhoneNumber() {
+    public void setStatus(UserStatus status) {
+        this.status = status;
+    }
+
+    public String getPhoneNumber() {
         return phoneNumber;
     }
 
-    public void setPhoneNumber(Integer phoneNumber) {
+    public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
     }
 
