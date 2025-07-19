@@ -35,6 +35,25 @@ public class CaseDetailDTO {
     private List<HearingDTO> hearings;
     // private List<DocumentDTO> documents; // For the future
 
+    // details of the lawyer and firm
+    private String ownerLawyerName; // To hold the name of the primary lawyer
+    private String firmName;
+
+    public String getOwnerLawyerName() {
+        return ownerLawyerName;
+    }
+
+    public void setOwnerLawyerName(String ownerLawyerName) {
+        this.ownerLawyerName = ownerLawyerName;
+    }
+
+    public String getFirmName() {
+        return firmName;
+    }
+
+    public void setFirmName(String firmName) {
+        this.firmName = firmName;
+    }
 
     public String getClientEmail() {
         return clientEmail;

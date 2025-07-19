@@ -57,6 +57,20 @@ public class CaseDetailMapper {
             dto.setHearings(hearingDtos);
         }
 
+        if (entity.getFirm() != null) {
+            dto.setFirmName(entity.getFirm().getFirmName());
+        }
+
+        // 2. Find and map the Owner Lawyer's Name
+        // We search through the case members to find the one with the LAWYER role.
+        Optional<String> ownerName = entity.getMembers().stream()
+                .filter(member -> member.getUser().getRole() == AppRole.LAWYER)
+                .map(member -> (member.getUser().getFirstName() + " " + member.getUser().getLastName()).trim())
+                .findFirst(); // Assumes there's one primary lawyer per case membership
+
+        // If a lawyer is found among the members, set their name.
+        ownerName.ifPresent(dto::setOwnerLawyerName);
+
         return dto;
     }
 
