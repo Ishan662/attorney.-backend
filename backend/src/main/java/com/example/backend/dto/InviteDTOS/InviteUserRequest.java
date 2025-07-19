@@ -8,8 +8,16 @@ public class InviteUserRequest {
     private String email;
     private String fullName;
     private AppRole role;
-    // For inviting clients to a specific case
+    private String phoneNumber;
     private java.util.UUID caseId;
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
 
     public String getEmail() {
         return email;

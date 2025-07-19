@@ -81,6 +81,11 @@
 			<optional>true</optional>
 		</dependency>
 
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-mail</artifactId>
+		</dependency>
+
 		<!--for firebase-->
 		<dependency>
 			<groupId>com.google.firebase</groupId>
