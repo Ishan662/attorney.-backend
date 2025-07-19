@@ -22,6 +22,7 @@ public class CaseDetailDTO {
     // Parties
     private String clientName;
     private String clientPhone;
+    private String clientEmail;
     private String opposingPartyName;
     private String junior; // Name of an assigned junior
 
@@ -34,6 +35,14 @@ public class CaseDetailDTO {
     private List<HearingDTO> hearings;
     // private List<DocumentDTO> documents; // For the future
 
+
+    public String getClientEmail() {
+        return clientEmail;
+    }
+
+    public void setClientEmail(String clientEmail) {
+        this.clientEmail = clientEmail;
+    }
 
     public UUID getId() {
         return id;

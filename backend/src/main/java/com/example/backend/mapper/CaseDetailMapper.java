@@ -35,6 +35,8 @@ public class CaseDetailMapper {
         dto.setDescription(entity.getDescription());
         dto.setClientName(entity.getClientName());
         dto.setClientPhone(entity.getClientPhone());
+        dto.setClientEmail(entity.getClientEmail());
+
         dto.setOpposingPartyName(entity.getOpposingPartyName());
         dto.setAgreedFee(entity.getAgreedFee());
         dto.setPaymentStatus(entity.getPaymentStatus());

@@ -3,6 +3,7 @@ package com.example.backend.service;
 
 import com.example.backend.dto.hearingDTOS.CreateHearingDto;
 import com.example.backend.dto.hearingDTOS.HearingDTO;
+import com.example.backend.dto.hearingDTOS.UpdateHearingDto;
 import com.example.backend.mapper.HearingMapper;
 import com.example.backend.model.cases.Case;
 import com.example.backend.model.hearing.Hearing;
@@ -61,5 +62,37 @@ public class HearingService {
             throw new AccessDeniedException("You do not have permission to access this case.");
         }
         return aCase;
+    }
+
+    @Transactional
+    public HearingDTO updateHearing(UUID hearingId, UpdateHearingDto updateDto) {
+        User currentUser = getCurrentUser();
+        Hearing hearing = hearingRepository.findById(hearingId)
+                .orElseThrow(() -> new RuntimeException("Hearing not found"));
+
+        // Verify the user has access to the case this hearing belongs to
+        findCaseAndVerifyAccess(hearing.getaCase().getId(), currentUser);
+
+        // Update the hearing entity with the new data from the DTO
+        hearing.setTitle(updateDto.getTitle());
+        hearing.setHearingDate(updateDto.getHearingDate());
+        hearing.setLocation(updateDto.getLocation());
+        hearing.setNote(updateDto.getNote());
+        hearing.setStatus(updateDto.getStatus());
+
+        Hearing updatedHearing = hearingRepository.save(hearing);
+        return hearingMapper.toHearingDto(updatedHearing);
+    }
+
+    @Transactional
+    public void deleteHearing(UUID hearingId) {
+        User currentUser = getCurrentUser();
+        Hearing hearing = hearingRepository.findById(hearingId)
+                .orElseThrow(() -> new RuntimeException("Hearing not found"));
+
+        // Verify the user has access before allowing deletion
+        findCaseAndVerifyAccess(hearing.getaCase().getId(), currentUser);
+
+        hearingRepository.delete(hearing);
     }
 }
