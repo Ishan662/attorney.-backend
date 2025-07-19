@@ -78,6 +78,7 @@ public class AuthService {
         response.put("status", currentUser.getStatus());
         response.put("phoneNumber", currentUser.getPhoneNumber());
         response.put("fullName", currentUser.getFirstName() + " " + currentUser.getLastName());
+        response.put("role", currentUser.getRole());
 
         return response;
     }

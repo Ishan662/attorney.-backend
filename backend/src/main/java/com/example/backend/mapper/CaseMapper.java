@@ -83,6 +83,19 @@ public class CaseMapper {
         dto.setCreatedAt(entity.getCreatedAt());
         dto.setUpdatedAt(entity.getUpdatedAt());
 
+        // get the firm name and lawyer name
+        if (entity.getFirm() != null) {
+            dto.setFirmName(entity.getFirm().getFirmName());
+        }
+
+        Optional<String> ownerName = entity.getMembers().stream()
+                .filter(member -> member.getUser().getRole() == AppRole.LAWYER)
+                .map(member -> (member.getUser().getFirstName() + " " + member.getUser().getLastName()).trim())
+                .findFirst(); // Assumes there's one primary lawyer per case membership
+
+        // If a lawyer is found among the members, set their name.
+        ownerName.ifPresent(dto::setOwnerLawyerName);
+
 
         return dto;
     }
