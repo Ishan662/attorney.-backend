@@ -13,11 +13,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.UUID;
 
 @Service
 public class SubscriptionService {
 
-    // --- ▼▼▼ INJECT THE REQUIRED REPOSITORIES ▼▼▼ ---
     private final SubscriptionRepository subscriptionRepository;
     private final SubscriptionPlanRepository planRepository;
 
@@ -26,10 +26,8 @@ public class SubscriptionService {
         this.subscriptionRepository = subscriptionRepository;
         this.planRepository = planRepository;
     }
-    // --- ▲▲▲ INJECT THE REQUIRED REPOSITORIES ▲▲▲ ---
 
 
-    // --- ▼▼▼ IMPLEMENT THE METHOD LOGIC ▼▼▼ ---
     /**
      * Creates a default 14-day trial subscription for a newly created firm.
      * This method is called by the AuthService after a new lawyer successfully registers.
@@ -58,6 +56,28 @@ public class SubscriptionService {
 
         System.out.println("Successfully created 14-day trial for firm: " + firm.getFirmName());
     }
-    // --- ▲▲▲ IMPLEMENT THE METHOD LOGIC ▲▲▲ ---
+
+//    @Transactional
+//    public void createSubscriptionForResearcher(UUID id) {
+//        SubscriptionPlan trialPlan = planRepository.findByPlanName("TRIAL_EDUCATION")
+//                .orElseThrow(() -> new IllegalStateException("TRIAL subscription plan not found in database."));
+//
+//        // 2. Create a new Subscription entity.
+//        Subscription trialSubscription = new Subscription();
+//        trialSubscription.setPlan(trialPlan);
+//        // we have to somehow get the data and then call that into the setUser
+//        trialSubscription.setUser(null);
+//        trialSubscription.setStatus(SubscriptionStatus.TRIAL);
+//
+//        // 3. Set the trial period (e.g., 14 days).
+//        Instant trialEndDate = Instant.now().plus(7, ChronoUnit.DAYS);
+//        trialSubscription.setEndDate(trialEndDate);
+//
+//        // 4. Save the new subscription record to the database.
+//        subscriptionRepository.save(trialSubscription);
+//
+//        System.out.println("Successfully created 14-day trial for firm: " + firm.getFirmName());
+//
+//    }
 
 }

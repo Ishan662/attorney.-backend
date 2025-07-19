@@ -63,4 +63,14 @@ public class TwilioController {
             return ResponseEntity.badRequest().body(null);
         }
     }
+
+//    These Functions will be used just for fake the phone number verification
+    @PostMapping("/verifynumber")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<UserDTO> verifyNumber(@RequestBody Map<String, String> payload) {
+        UserDTO currentUser = authService.getSessionInfoForCurrentUser();
+        UserDTO activatedUser = authService.activateCurrentUserAccount();
+
+        return ResponseEntity.ok(activatedUser);
+    }
 }

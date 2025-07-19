@@ -155,7 +155,7 @@ public class InvitationService {
         userToActivate.setFirebaseUid(decodedToken.getUid());
         userToActivate.setFirstName(finalizeRequest.getFirstName());
         userToActivate.setLastName(finalizeRequest.getLastName());
-        userToActivate.setStatus(UserStatus.ACTIVE);
+        userToActivate.setStatus(UserStatus.PENDING_PHONE_VERIFICATION);
         userRepository.save(userToActivate);
 
         // 5. If it's a client, add them to the case_members table
