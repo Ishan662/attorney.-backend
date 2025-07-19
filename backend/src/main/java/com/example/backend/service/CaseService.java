@@ -77,6 +77,7 @@ public class CaseService {
         newCase.setOpposingPartyName(request.getOpposingPartyName());
         newCase.setCaseNumber(request.getCaseNumber());
         newCase.setCourtName(request.getCourt());
+        newCase.setCaseType(request.getCaseType());
         newCase.setDescription(request.getDescription());
         newCase.setAgreedFee(request.getAgreedFee());
         newCase.setPaymentStatus(request.getPaymentStatus());
