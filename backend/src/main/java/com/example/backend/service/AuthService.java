@@ -48,7 +48,6 @@ public class AuthService {
             throw new IllegalStateException("This email address is already registered or has a pending invitation.");
         }
 
-        // --- ▼▼▼ CHANGE: CALL THE NEW HELPER METHOD ▼▼▼ ---
         // The logic is now delegated to the helper method.
         User newUser = createNewLawyerAndFirm(decodedToken, profileData);
         newUser.setStatus(UserStatus.PENDING_PHONE_VERIFICATION);
@@ -58,6 +57,35 @@ public class AuthService {
 
         return userMapper.toUserDTO(savedUser);
     }
+
+//    @Transactional
+//    public UserDTO registerNewEducator(String firebaseTokenString, Map<String, String> profileData) {
+//        FirebaseToken decodedToken = verifyFirebaseToken(firebaseTokenString);
+//        String email = decodedToken.getEmail();
+//
+//        if (userRepository.findByEmail(email).isPresent()) {
+//            throw new IllegalStateException("This email address is already registered or has a pending invitation.");
+//        }
+//
+//        String fullNameFromToken = decodedToken.getName();
+//
+//        User newUser = new User();
+//        newUser.setFirebaseUid(decodedToken.getUid());
+//        newUser.setEmail(decodedToken.getEmail());
+////        assert profileData != null;
+//        if (profileData != null) {
+//            newUser.setPhoneNumber(profileData.get("phoneNumber"));
+//        }
+//        newUser.setRole(AppRole.RESEARCHER);
+//        newUser.setFirm(null);
+//        parseAndSetUserName(newUser, fullNameFromToken, profileData);
+//        User savedUser = userRepository.save(newUser);
+//
+//        subscriptionService.createSubscriptionForResearcher(savedUser.getId());
+//
+//        return userMapper.toUserDTO(userRepository.save(newUser));
+//
+//    }
 
     public UserDTO getSessionInfoForCurrentUser() {
         String firebaseUid = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -110,9 +138,6 @@ public class AuthService {
                 throw new IllegalStateException("This email is associated with a pending invitation.");
             }
 
-            // --- ▼▼▼ CHANGE: CALL THE NEW HELPER METHOD ▼▼▼ ---
-            // The logic is now delegated to the helper method. Pass null for profileData
-            // as we will get the name from the token itself.
             User newLawyer = createNewLawyerAndFirm(decodedToken, null);
             newLawyer.setStatus(UserStatus.ACTIVE);
             User savedUser = userRepository.save(newLawyer);
@@ -125,7 +150,6 @@ public class AuthService {
         }
     }
 
-    // --- ▼▼▼ NEW HELPER METHOD CREATED FROM YOUR EXISTING LOGIC ▼▼▼ ---
     /**
      * A private helper to encapsulate the logic of creating a new Firm and a new User.
      * This is now reusable for both manual registration and Google sign-up.
@@ -157,7 +181,8 @@ public class AuthService {
 
         return newUser;
     }
-    // --- ▲▲▲ NEW HELPER METHOD CREATED ▲▲▲ ---
+
+
 
 
     private FirebaseToken verifyFirebaseToken(String tokenString) {
