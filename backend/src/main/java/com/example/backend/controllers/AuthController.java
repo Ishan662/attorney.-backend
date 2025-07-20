@@ -29,16 +29,16 @@ public class AuthController {
         UserDTO userDto = authService.registerNewLawyer(firebaseToken, profileData);
         return ResponseEntity.ok(userDto);
     }
-//
-//    @PostMapping("/register-researcher")
-//    public ResponseEntity<UserDTO> registerNewResearcher(
-//            @RequestHeader("Authorization") String authorizationHeader,
-//            @RequestBody(required = false) Map<String, String> profileData
-//    ){
-//        String firebaseToken = extractToken(authorizationHeader);
-//        UserDTO userDTO = authService.registerNewEducator(firebaseToken, profileData);
-//        return ResponseEntity.ok(userDTO);
-//    }
+
+    @PostMapping("/register-researcher")
+    public ResponseEntity<UserDTO> registerNewResearcher(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestBody(required = false) Map<String, String> profileData) {
+        String firebaseToken = extractToken(authorizationHeader);
+        // Call the consistently named service method
+        UserDTO userDTO = authService.registerNewResearcher(firebaseToken, profileData);
+        return ResponseEntity.ok(userDTO);
+    }
 
     @GetMapping("/session")
     @PreAuthorize("isAuthenticated()")

@@ -40,7 +40,7 @@ public class Case {
     @Column(nullable = false)
     private String caseTitle;
 
-    @Column(nullable = false, unique = true) // Assuming case numbers are unique system-wide
+    @Column(nullable = false, unique = true)
     private String caseNumber;
 
     @Column

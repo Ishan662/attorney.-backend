@@ -15,6 +15,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "subscriptions")
+@Check(constraints = "(firm_id IS NULL AND user_id IS NOT NULL) OR (firm_id IS NOT NULL AND user_id IS NULL)")
 public class Subscription {
 
     @Check(constraints = "(firm_id IS NULL AND user_id IS NOT NULL) OR (firm_id IS NOT NULL AND user_id IS NULL)")
@@ -23,7 +24,7 @@ public class Subscription {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
-    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "firm_id")
     private Firm firm;
 
