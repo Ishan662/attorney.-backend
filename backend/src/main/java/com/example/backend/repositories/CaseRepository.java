@@ -26,4 +26,6 @@ public interface CaseRepository extends JpaRepository<Case, UUID> {
      */
     @Query("SELECT c FROM Case c JOIN c.members m WHERE m.user.id = :userId")
     List<Case> findCasesByMemberUserId(@Param("userId") UUID userId);
+
+    boolean existsByFirmIdAndCaseNumber(UUID firmId, String caseNumber);
 }
