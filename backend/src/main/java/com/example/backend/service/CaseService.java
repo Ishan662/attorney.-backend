@@ -80,20 +80,19 @@ public class CaseService {
         String normalizedCaseNumber = null;
         if (request.getCaseNumber() != null && !request.getCaseNumber().trim().isEmpty()) {
             normalizedCaseNumber = request.getCaseNumber().toUpperCase().trim();
+        } else {
+            // DECISION: If the case number is required, we should throw an error here.
+            // Based on your entity (@Column(nullable=false)), it is required.
+            throw new IllegalArgumentException("Case Number is required and cannot be empty.");
         }
 
-        // 2. Proactively check if a case with this number already exists FOR THIS FIRM.
-        if (normalizedCaseNumber != null) {
-            // We need a new method in our CaseRepository for this check.
-            if (caseRepository.existsByFirmIdAndCaseNumber(lawyer.getFirm().getId(), normalizedCaseNumber)) {
-                // If it exists, throw a specific, predictable exception.
-                // We use IllegalStateException because our RestExceptionHandler already knows how to handle it.
-                throw new IllegalStateException("A case with this number already exists in your firm.");
-            }
+        // b. Proactively check for duplicates in the same firm.
+        if (caseRepository.existsByFirmIdAndCaseNumber(lawyer.getFirm().getId(), normalizedCaseNumber)) {
+            throw new IllegalStateException("A case with this number already exists in your firm.");
         }
 
-//        newCase.setCaseNumber(request.getCaseNumber());
         newCase.setCourtName(request.getCourt());
+        newCase.setCaseNumber(normalizedCaseNumber);
         newCase.setCaseType(request.getCaseType());
         newCase.setDescription(request.getDescription());
         newCase.setAgreedFee(request.getAgreedFee());
