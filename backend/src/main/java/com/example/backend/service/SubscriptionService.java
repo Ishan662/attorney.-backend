@@ -5,6 +5,7 @@ import com.example.backend.model.subcription.Subscription;
 import com.example.backend.model.subcription.SubscriptionPlan;
 import com.example.backend.model.subcription.SubscriptionStatus; // Make sure this enum exists
 import com.example.backend.model.firm.Firm;
+import com.example.backend.model.user.User;
 import com.example.backend.repositories.SubscriptionPlanRepository;
 import com.example.backend.repositories.SubscriptionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,27 +58,27 @@ public class SubscriptionService {
         System.out.println("Successfully created 14-day trial for firm: " + firm.getFirmName());
     }
 
-//    @Transactional
-//    public void createSubscriptionForResearcher(UUID id) {
-//        SubscriptionPlan trialPlan = planRepository.findByPlanName("TRIAL_EDUCATION")
-//                .orElseThrow(() -> new IllegalStateException("TRIAL subscription plan not found in database."));
-//
-//        // 2. Create a new Subscription entity.
-//        Subscription trialSubscription = new Subscription();
-//        trialSubscription.setPlan(trialPlan);
-//        // we have to somehow get the data and then call that into the setUser
-//        trialSubscription.setUser(null);
-//        trialSubscription.setStatus(SubscriptionStatus.TRIAL);
-//
-//        // 3. Set the trial period (e.g., 14 days).
-//        Instant trialEndDate = Instant.now().plus(7, ChronoUnit.DAYS);
-//        trialSubscription.setEndDate(trialEndDate);
-//
-//        // 4. Save the new subscription record to the database.
-//        subscriptionRepository.save(trialSubscription);
-//
-//        System.out.println("Successfully created 14-day trial for firm: " + firm.getFirmName());
-//
-//    }
+    @Transactional
+    public void createSubscriptionForResearcher(User researcher) {
+        // 1. Find the correct plan for researchers.
+        SubscriptionPlan researcherPlan = planRepository.findByPlanName("RESEARCHER_TRIAL")
+                .orElseThrow(() -> new IllegalStateException("RESEARCHER_TRIAL plan not found in database."));
+
+        // 2. Create a new Subscription entity.
+        Subscription subscription = new Subscription();
+        subscription.setPlan(researcherPlan);
+        subscription.setUser(researcher); // Correctly link to the User
+        subscription.setFirm(null);       // Explicitly set firm to null
+        subscription.setStatus(SubscriptionStatus.TRIAL);
+
+        // 3. Set the trial period.
+        Instant trialEndDate = Instant.now().plus(7, ChronoUnit.DAYS);
+        subscription.setEndDate(trialEndDate);
+
+        // 4. Save the new subscription record.
+        subscriptionRepository.save(subscription);
+
+        System.out.println("Successfully created 7-day researcher trial for: " + researcher.getEmail());
+    }
 
 }
