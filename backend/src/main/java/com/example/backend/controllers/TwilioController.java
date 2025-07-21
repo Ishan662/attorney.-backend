@@ -68,9 +68,7 @@ public class TwilioController {
     @PostMapping("/verifynumber")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<UserDTO> verifyNumber(@RequestBody Map<String, String> payload) {
-        UserDTO currentUser = authService.getSessionInfoForCurrentUser();
         UserDTO activatedUser = authService.activateCurrentUserAccount();
-
         return ResponseEntity.ok(activatedUser);
     }
 }

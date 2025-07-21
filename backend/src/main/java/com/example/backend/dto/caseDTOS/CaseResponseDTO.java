@@ -20,6 +20,7 @@ public class CaseResponseDTO {
     private String caseNumber;
     private String description;
     private String courtName;
+    private String courtType;
 
     // --- Parties ---
     private String clientName;
@@ -50,6 +51,14 @@ public class CaseResponseDTO {
     private String firmName;
 
     private String ownerLawyerName;
+
+    public String getCourtType() {
+        return courtType;
+    }
+
+    public void setCourtType(String courtType) {
+        this.courtType = courtType;
+    }
 
     public String getOwnerLawyerName() {
         return ownerLawyerName;

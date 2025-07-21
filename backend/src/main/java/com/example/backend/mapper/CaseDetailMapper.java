@@ -31,6 +31,10 @@ public class CaseDetailMapper {
         dto.setCaseNumber(entity.getCaseNumber());
         dto.setCaseTitle(entity.getCaseTitle());
         dto.setCaseType(entity.getCaseType());
+
+        dto.setCourtName(entity.getCourtName());
+        dto.setCourtType(entity.getCourtType());
+
         dto.setStatus(entity.getStatus());
         dto.setDescription(entity.getDescription());
         dto.setClientName(entity.getClientName());

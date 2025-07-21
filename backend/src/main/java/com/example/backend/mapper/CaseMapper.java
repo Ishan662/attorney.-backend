@@ -47,6 +47,7 @@ public class CaseMapper {
 
         // Details
         dto.setCourtName(entity.getCourtName());
+        dto.setCourtType(entity.getCourtType());
         dto.setDescription(entity.getDescription());
 
         // Status & Financials
@@ -121,6 +122,7 @@ public class CaseMapper {
         if (dto.getCaseNumber() != null) entity.setCaseNumber(dto.getCaseNumber());
         if (dto.getCaseType() != null) entity.setCaseType(dto.getCaseType());
         if (dto.getCourtName() != null) entity.setCourtName(dto.getCourtName());
+        if (dto.getCourtType() != null) entity.setCourtType(dto.getCourtType());
         if (dto.getDescription() != null) entity.setDescription(dto.getDescription());
         if (dto.getClientName() != null) entity.setClientName(dto.getClientName());
         if (dto.getClientPhone() != null) entity.setClientPhone(dto.getClientPhone());

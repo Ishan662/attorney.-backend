@@ -19,6 +19,7 @@ public class CaseDTO {
     private String description;
     private String partyName;
     private String courtName;
+    private String courtType;
 
     // --- Status Fields ---
     private CaseStatus status;
@@ -36,6 +37,15 @@ public class CaseDTO {
     // --- Getters and Setters for ALL fields ---
     // (It's very important to have getters and setters for all these fields
     // so the mapping and JSON serialization libraries can work correctly.)
+
+
+    public String getCourtType() {
+        return courtType;
+    }
+
+    public void setCourtType(String courtType) {
+        this.courtType = courtType;
+    }
 
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
