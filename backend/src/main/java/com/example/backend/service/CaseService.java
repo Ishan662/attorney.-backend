@@ -33,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 @Service
@@ -58,6 +59,9 @@ public class CaseService {
 
     @Transactional
     public UUID createCase(CreateCaseRequest request) {
+        // print comming request details
+        System.out.println("COurt Type:" + request.getCourtType());
+
         // 1. Get the authenticated lawyer creating the case.
         User lawyer = getCurrentUser();
         if (lawyer.getRole() != AppRole.LAWYER) {
@@ -92,6 +96,8 @@ public class CaseService {
         }
 
         newCase.setCourtName(request.getCourt());
+        newCase.setCourtType(request.getCourtType());
+
         newCase.setCaseNumber(normalizedCaseNumber);
         newCase.setCaseType(request.getCaseType());
         newCase.setDescription(request.getDescription());

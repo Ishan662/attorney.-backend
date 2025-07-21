@@ -17,6 +17,7 @@ public class CaseDetailDTO {
     private String caseType;
     private String description;
     private String courtName;
+    private String courtType;
     private CaseStatus status;
 
     // Parties
@@ -38,6 +39,14 @@ public class CaseDetailDTO {
     // details of the lawyer and firm
     private String ownerLawyerName; // To hold the name of the primary lawyer
     private String firmName;
+
+    public String getCourtType() {
+        return courtType;
+    }
+
+    public void setCourtType(String courtType) {
+        this.courtType = courtType;
+    }
 
     public String getOwnerLawyerName() {
         return ownerLawyerName;
