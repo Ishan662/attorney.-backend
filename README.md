@@ -23,3 +23,6 @@
    1. Stop: docker container stop attorney-db
    2. Start: docker container start attorney-db
    3. Or use docker-desktop
+
+server pass : Atto#123
+server admin: attorney

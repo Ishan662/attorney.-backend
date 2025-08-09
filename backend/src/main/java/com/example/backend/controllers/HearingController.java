@@ -38,8 +38,6 @@ public class HearingController {
         return new ResponseEntity<>(newHearing, HttpStatus.CREATED);
     }
 
-    // --- ▼▼▼ ADD THESE NEW ENDPOINTS ▼▼▼ ---
-
     /**
      * Endpoint to update an existing hearing.
      */
@@ -63,4 +61,3 @@ public class HearingController {
     }
 
 }
-    // --- ▲▲▲ ADD THESE NEW ENDPOINTS ▲▲▲ ---

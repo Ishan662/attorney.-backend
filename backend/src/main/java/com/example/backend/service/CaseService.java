@@ -180,7 +180,6 @@ public class CaseService {
             throw new AccessDeniedException("You do not have permission to view this case.");
         }
 
-
         // The only change is here: we now call the new caseDetailMapper
         // to create the rich DTO for the details page.
         return caseDetailMapper.toDetailDto(aCase);
