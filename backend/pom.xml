@@ -115,6 +115,12 @@
 			<version>9.2.4</version> <!-- Use the latest version -->
 		</dependency>
 
+		<dependency>
+			<groupId>com.vladmihalcea</groupId>
+			<artifactId>hibernate-types-60</artifactId>
+			<version>2.21.1</version>
+		</dependency>
+
 	</dependencies>
 
 	<build>
