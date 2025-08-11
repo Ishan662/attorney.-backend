@@ -19,6 +19,9 @@ target/
 *.iws
 *.iml
 *.ipr
+*.idea
+
+
 
 ### NetBeans ###
 /nbproject/private/
@@ -32,6 +35,12 @@ build/
 
 ### Firebase configurations
 **/src/main/resources/serviceAccountKey.json
+
+## properties
+**/src/main/resources/application.properties
+**/src/main/resources/.env
+
+**/src/main/resources/
 
 
 ### VS Code ###

@@ -1,6 +1,5 @@
 package com.example.backend.controllers;
 
-// --- ▼▼▼ IMPORT THE NEW, SPECIFIC DTOS ▼▼▼ ---
 import com.example.backend.dto.caseDTOS.CaseDetailDTO;
 import com.example.backend.dto.caseDTOS.CreateCaseRequest;
 import com.example.backend.dto.caseDTOS.CaseResponseDTO;
