@@ -1,7 +1,6 @@
 package com.example.backend.model.lawyer;
 
 import com.example.backend.model.user.User;
-import com.vladmihalcea.hibernate.type.json.JsonNodeBinaryType;
 import jakarta.persistence.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
