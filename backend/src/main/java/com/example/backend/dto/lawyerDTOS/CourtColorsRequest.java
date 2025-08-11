@@ -1,12 +1,13 @@
 package com.example.backend.dto.lawyerDTOS;
 
 import java.util.Map;
+import java.util.UUID;
 
 public class CourtColorsRequest {
     private Long userId;
     private Map<String, String> courtColors;
 
-    public Long getUserId() {return userId;}
+    public UUID getUserId() {return userId;}
     public void setUserId(Long userId) {this.userId = userId;}
 
     public Map<String, String> getCourtColors() {
