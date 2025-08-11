@@ -4,14 +4,12 @@ import java.util.Map;
 import java.util.UUID;
 
 public class CourtColorsRequest {
-    private Long userId;
+    private UUID userId;
     private Map<String, String> courtColors;
 
-    public UUID getUserId() {return userId;}
-    public void setUserId(Long userId) {this.userId = userId;}
+    public UUID getUserId() { return userId; }
+    public void setUserId(UUID userId) { this.userId = userId; }
 
-    public Map<String, String> getCourtColors() {
-        return courtColors;
-    }
-    public void setCourtColors(Map<String, String> courtColors) {this.courtColors = courtColors;}
+    public Map<String, String> getCourtColors() { return courtColors; }
+    public void setCourtColors(Map<String, String> courtColors) { this.courtColors = courtColors; }
 }
