@@ -23,8 +23,6 @@ public class CustomUserDetailsService implements UserDetailsService {
         User appUser = userRepository.findByFirebaseUid(firebaseUid)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with Firebase UID: " + firebaseUid));
 
-        // --- ▼▼▼ THIS IS THE FIX ▼▼▼ ---
-        //
         // We are replacing the call to the deleted 'isActive()' method
         // with a check against the new 'status' field.
         // A user is only considered valid for login if their status is ACTIVE.
@@ -32,7 +30,6 @@ public class CustomUserDetailsService implements UserDetailsService {
         if (appUser.getStatus() != UserStatus.ACTIVE) {
             throw new UsernameNotFoundException("User account is not active. Status: " + appUser.getStatus());
         }
-        // --- ▲▲▲ THIS IS THE FIX ▲▲▲ ---
 
 
         // The "ROLE_" prefix is a standard convention for Spring Security's hasRole() check

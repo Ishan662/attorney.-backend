@@ -29,6 +29,7 @@ public class InvitationService {
     @Autowired private InvitationRepository invitationRepository;
     @Autowired private CaseRepository caseRepository; // Needed to validate case context
     @Autowired private CaseMemberRepository caseMemberRepository; // Needed to add clients to cases
+    @Autowired private EmailService emailService;
 
     @Transactional
     public void createAndSendInvitation(InviteUserRequest inviteRequest) {
@@ -45,6 +46,25 @@ public class InvitationService {
             throw new IllegalArgumentException("Cannot invite users with this role.");
         }
 
+        if (inviteRequest.getRole() == AppRole.CLIENT) {
+            if (inviteRequest.getCaseId() == null) {
+                throw new IllegalArgumentException("Case ID is required when inviting a client.");
+            }
+
+            // 1. Find the case and verify the lawyer has permission to edit it.
+            Case targetCase = caseRepository.findById(inviteRequest.getCaseId())
+                    .filter(c -> c.getFirm().getId().equals(invitingLawyer.getFirm().getId()))
+                    .orElseThrow(() -> new IllegalArgumentException("Case not found or you do not have permission."));
+
+            // 2. Update the case with the new client information from the form.
+            targetCase.setClientName(inviteRequest.getFullName());
+            targetCase.setClientEmail(inviteRequest.getEmail());
+            targetCase.setClientPhone(inviteRequest.getPhoneNumber()); // Assuming DTO has this
+
+            // 3. Save the updated case details.
+            caseRepository.save(targetCase);
+        }
+
         // 3. Pre-provision a placeholder user if they don't exist
         User placeholderUser = userRepository.findByEmail(inviteRequest.getEmail())
                 .orElseGet(() -> {
@@ -54,6 +74,7 @@ public class InvitationService {
                     newUser.setRole(inviteRequest.getRole());
                     parseAndSetFullName(newUser, inviteRequest.getFullName()); // set the full name with the help of a helper function
                     newUser.setStatus(UserStatus.PENDING_INVITATION);
+                    newUser.setPhoneNumber(inviteRequest.getPhoneNumber());
                     return userRepository.save(newUser);
                 });
 
@@ -79,6 +100,31 @@ public class InvitationService {
         // 5. TODO: Trigger an external email service here
         // emailService.sendInvitationEmail(invitation.getEmail(), invitation.getInvitationToken());
         System.out.println("SIMULATING EMAIL: Invitation sent for " + invitation.getEmail());
+        System.out.println("URL: http://localhost:5173/accept-invitation/"+invitation.getInvitationToken());
+        String recipientEmail = invitation.getEmail();
+        String subject = String.format("Invitation to Join %s on The Attorney Platform", invitation.getFirm().getFirmName());
+
+        String emailBody = getString(invitation);
+
+        // Call our new service to dispatch the email!
+        emailService.sendSimpleMessage(recipientEmail, subject, emailBody);
+    }
+
+    // Function for sending the email
+    private static String getString(Invitation invitation) {
+        String invitationUrl = "http://localhost:5173/accept-invitation/" + invitation.getInvitationToken();
+
+        String emailBody = String.format(
+                "Hello,\n\nYou have been personally invited by %s to join their team on The Attorney Platform.\n\n" +
+                        "Please click the link below to accept your invitation and create your secure account:\n\n" +
+                        "%s\n\n" +
+                        "This link is valid for 48 hours.\n\n" +
+                        "If you were not expecting this invitation, you can safely disregard this email.\n\n" +
+                        "Sincerely,\nThe Attorney Platform Team",
+                invitation.getInvitedByUser().getFirstName(), // Get the lawyer's name who sent the invite
+                invitationUrl
+        );
+        return emailBody;
     }
 
     @Transactional
@@ -109,7 +155,7 @@ public class InvitationService {
         userToActivate.setFirebaseUid(decodedToken.getUid());
         userToActivate.setFirstName(finalizeRequest.getFirstName());
         userToActivate.setLastName(finalizeRequest.getLastName());
-        userToActivate.setStatus(UserStatus.ACTIVE);
+        userToActivate.setStatus(UserStatus.PENDING_PHONE_VERIFICATION);
         userRepository.save(userToActivate);
 
         // 5. If it's a client, add them to the case_members table
@@ -158,6 +204,7 @@ public class InvitationService {
         String lastName = user.getLastName();
         String fullName = user.getFirstName() + " " + user.getLastName();
         dto.setFullName(fullName);
+        dto.setPhoneNumber(user.getPhoneNumber());
         return dto;
     }
 }

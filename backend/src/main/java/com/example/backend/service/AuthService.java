@@ -39,24 +39,75 @@ public class AuthService {
         this.subscriptionService = subscriptionService;
     }
 
+//    @Transactional
+//    public UserDTO registerNewLawyer(String firebaseTokenString, Map<String, String> profileData) {
+//        FirebaseToken decodedToken = verifyFirebaseToken(firebaseTokenString);
+//        String email = decodedToken.getEmail();
+//
+//        if (userRepository.findByEmail(email).isPresent()) {
+//            throw new IllegalStateException("This email address is already registered or has a pending invitation.");
+//        }
+//
+//        // The logic is now delegated to the helper method.
+//        User newUser = createNewLawyerAndFirm(decodedToken, profileData);
+//        newUser.setStatus(UserStatus.PENDING_PHONE_VERIFICATION);
+//        User savedUser = userRepository.save(newUser);
+//
+//        subscriptionService.createTrialSubscriptionForFirm(savedUser.getFirm());
+//
+//        return userMapper.toUserDTO(savedUser);
+//    }
+
     @Transactional
     public UserDTO registerNewLawyer(String firebaseTokenString, Map<String, String> profileData) {
         FirebaseToken decodedToken = verifyFirebaseToken(firebaseTokenString);
-        String email = decodedToken.getEmail();
-
-        if (userRepository.findByEmail(email).isPresent()) {
-            throw new IllegalStateException("This email address is already registered or has a pending invitation.");
+        if (userRepository.findByEmail(decodedToken.getEmail()).isPresent()) {
+            throw new IllegalStateException("Email already in use.");
         }
-
-        // --- ▼▼▼ CHANGE: CALL THE NEW HELPER METHOD ▼▼▼ ---
-        // The logic is now delegated to the helper method.
-        User newUser = createNewLawyerAndFirm(decodedToken, profileData);
+        User newUser = createNewUser(decodedToken, profileData, AppRole.LAWYER, true);
         newUser.setStatus(UserStatus.PENDING_PHONE_VERIFICATION);
         User savedUser = userRepository.save(newUser);
-
         subscriptionService.createTrialSubscriptionForFirm(savedUser.getFirm());
-
         return userMapper.toUserDTO(savedUser);
+    }
+
+    @Transactional
+    public UserDTO registerNewResearcher(String firebaseTokenString, Map<String, String> profileData) {
+        FirebaseToken decodedToken = verifyFirebaseToken(firebaseTokenString);
+        if (userRepository.findByEmail(decodedToken.getEmail()).isPresent()) {
+            throw new IllegalStateException("Email already in use.");
+        }
+        User newUser = createNewUser(decodedToken, profileData, AppRole.RESEARCHER, false);
+        // Researchers can be activated immediately if they don't need phone verification.
+        newUser.setStatus(UserStatus.PENDING_PHONE_VERIFICATION);
+        User savedUser = userRepository.save(newUser);
+        subscriptionService.createSubscriptionForResearcher(savedUser);
+        return userMapper.toUserDTO(savedUser);
+    }
+
+    private User createNewUser(FirebaseToken decodedToken, Map<String, String> profileData, AppRole role, boolean withFirm) {
+        User newUser = new User();
+        newUser.setFirebaseUid(decodedToken.getUid());
+        newUser.setEmail(decodedToken.getEmail());
+        newUser.setRole(role);
+
+        if (profileData != null) {
+            newUser.setPhoneNumber(profileData.get("phoneNumber"));
+        }
+        parseAndSetUserName(newUser, decodedToken.getName(), profileData);
+
+        if (withFirm) {
+            Firm newFirm = new Firm();
+            String firmNameBasis = (profileData != null && profileData.get("firstName") != null)
+                    ? profileData.get("firstName") + " " + profileData.get("lastName")
+                    : decodedToken.getName();
+            newFirm.setFirmName(firmNameBasis != null ? firmNameBasis.trim() + "'s Law Firm" : "New Law Firm");
+            firmRepository.save(newFirm);
+            newUser.setFirm(newFirm);
+        } else {
+            newUser.setFirm(null);
+        }
+        return newUser;
     }
 
     public UserDTO getSessionInfoForCurrentUser() {
@@ -78,6 +129,7 @@ public class AuthService {
         response.put("status", currentUser.getStatus());
         response.put("phoneNumber", currentUser.getPhoneNumber());
         response.put("fullName", currentUser.getFirstName() + " " + currentUser.getLastName());
+        response.put("role", currentUser.getRole());
 
         return response;
     }
@@ -109,9 +161,6 @@ public class AuthService {
                 throw new IllegalStateException("This email is associated with a pending invitation.");
             }
 
-            // --- ▼▼▼ CHANGE: CALL THE NEW HELPER METHOD ▼▼▼ ---
-            // The logic is now delegated to the helper method. Pass null for profileData
-            // as we will get the name from the token itself.
             User newLawyer = createNewLawyerAndFirm(decodedToken, null);
             newLawyer.setStatus(UserStatus.ACTIVE);
             User savedUser = userRepository.save(newLawyer);
@@ -124,7 +173,6 @@ public class AuthService {
         }
     }
 
-    // --- ▼▼▼ NEW HELPER METHOD CREATED FROM YOUR EXISTING LOGIC ▼▼▼ ---
     /**
      * A private helper to encapsulate the logic of creating a new Firm and a new User.
      * This is now reusable for both manual registration and Google sign-up.
@@ -156,7 +204,8 @@ public class AuthService {
 
         return newUser;
     }
-    // --- ▲▲▲ NEW HELPER METHOD CREATED ▲▲▲ ---
+
+
 
 
     private FirebaseToken verifyFirebaseToken(String tokenString) {

@@ -33,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 @Service
@@ -56,9 +57,11 @@ public class CaseService {
         this.caseDetailMapper = caseDetailMapper;
     }
 
-    // --- ▼▼▼ THIS IS THE REFACTORED METHOD WITH SIMPLIFIED LOGIC ▼▼▼ ---
     @Transactional
     public UUID createCase(CreateCaseRequest request) {
+        // print comming request details
+        System.out.println("COurt Type:" + request.getCourtType());
+
         // 1. Get the authenticated lawyer creating the case.
         User lawyer = getCurrentUser();
         if (lawyer.getRole() != AppRole.LAWYER) {
@@ -75,8 +78,28 @@ public class CaseService {
         newCase.setClientPhone(request.getClientPhone());
         newCase.setClientEmail(request.getClientEmail());
         newCase.setOpposingPartyName(request.getOpposingPartyName());
-        newCase.setCaseNumber(request.getCaseNumber());
+
+
+        // Get the case number from the request and update that to a upper case without white spaces.
+        String normalizedCaseNumber = null;
+        if (request.getCaseNumber() != null && !request.getCaseNumber().trim().isEmpty()) {
+            normalizedCaseNumber = request.getCaseNumber().toUpperCase().trim();
+        } else {
+            // DECISION: If the case number is required, we should throw an error here.
+            // Based on your entity (@Column(nullable=false)), it is required.
+            throw new IllegalArgumentException("Case Number is required and cannot be empty.");
+        }
+
+        // b. Proactively check for duplicates in the same firm.
+        if (caseRepository.existsByFirmIdAndCaseNumber(lawyer.getFirm().getId(), normalizedCaseNumber)) {
+            throw new IllegalStateException("A case with this number already exists in your firm.");
+        }
+
         newCase.setCourtName(request.getCourt());
+        newCase.setCourtType(request.getCourtType());
+
+        newCase.setCaseNumber(normalizedCaseNumber);
+        newCase.setCaseType(request.getCaseType());
         newCase.setDescription(request.getDescription());
         newCase.setAgreedFee(request.getAgreedFee());
         newCase.setPaymentStatus(request.getPaymentStatus());
@@ -97,7 +120,6 @@ public class CaseService {
         }
 
         // 4. IMPORTANT: NO client user is created here. The invitation flow is now separate.
-        // The lawyer can invite the client to the portal later, which would then create the User record.
 
         // 5. If a junior was associated, find them and add them as a case member.
         if (request.getAssociatedJuniorId() != null) {
@@ -163,7 +185,6 @@ public class CaseService {
         return caseDetailMapper.toDetailDto(aCase);
     }
 
-    // --- ▼▼▼ ADD THIS NEW METHOD ▼▼▼ ---
     @Transactional
     public CaseResponseDTO updateCase(UUID caseId, UpdateCaseRequest updateRequest) {
         // 1. Get the current user who is making the request.
@@ -173,8 +194,6 @@ public class CaseService {
         Case existingCase = caseRepository.findById(caseId)
                 .orElseThrow(() -> new RuntimeException("Case not found with ID: " + caseId));
 
-        // 3. Perform a robust security check.
-        // A user can only update a case if they are a member of that case.
         // This works for both the owning Lawyer and any assigned Juniors.
         boolean isMember = existingCase.getMembers().stream()
                 .anyMatch(member -> member.getUser().getId().equals(currentUser.getId()));
@@ -183,18 +202,28 @@ public class CaseService {
             throw new AccessDeniedException("You do not have permission to update this case.");
         }
 
-        // 4. Use the mapper to apply the changes from the DTO to the entity.
+        // check the case sensitivity
+        if (updateRequest.getCaseNumber() != null) {
+            // a. Normalize the incoming new case number.
+            String newNormalizedCaseNumber = updateRequest.getCaseNumber().toUpperCase().trim();
+            String currentNormalizedCaseNumber = (existingCase.getCaseNumber() != null)
+                    ? existingCase.getCaseNumber().toUpperCase().trim()
+                    : null;
+
+            if (!newNormalizedCaseNumber.equals(currentNormalizedCaseNumber)) {
+
+                if (caseRepository.existsByFirmIdAndCaseNumber(currentUser.getFirm().getId(), newNormalizedCaseNumber)) {
+                    throw new IllegalStateException("A different case with this number already exists in your firm.");
+                }
+            }
+        }
+
         caseMapper.updateCaseFromDto(updateRequest, existingCase);
 
-        // The @PreUpdate annotation on the Case entity will handle setting the updatedAt timestamp automatically.
-
-        // 5. Save the updated entity back to the database.
         Case updatedCase = caseRepository.save(existingCase);
 
-        // 6. Convert the final, saved entity to a response DTO and return it.
         return caseMapper.toResponseDto(updatedCase);
     }
-    // --- ▲▲▲ ADD THIS NEW METHOD ▲▲▲ ---
 
     @Transactional
     public void archiveCase(UUID caseId) {

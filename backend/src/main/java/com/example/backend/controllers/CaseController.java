@@ -1,6 +1,5 @@
 package com.example.backend.controllers;
 
-// --- ▼▼▼ IMPORT THE NEW, SPECIFIC DTOS ▼▼▼ ---
 import com.example.backend.dto.caseDTOS.CaseDetailDTO;
 import com.example.backend.dto.caseDTOS.CreateCaseRequest;
 import com.example.backend.dto.caseDTOS.CaseResponseDTO;
@@ -28,32 +27,19 @@ public class CaseController {
         this.caseService = caseService;
     }
 
-    /**
-     * API endpoint to create a new case.
-     * Accepts a CreateCaseRequest object tailored to the creation form.
-     * Returns the UUID of the newly created case.
-     */
     @PostMapping
     @PreAuthorize("hasRole('LAWYER')")
-    // --- ▼▼▼ CHANGE 1: UPDATE THE METHOD SIGNATURE ▼▼▼ ---
     public ResponseEntity<UUID> createCase(@RequestBody CreateCaseRequest createCaseRequest) {
         UUID newCaseId = caseService.createCase(createCaseRequest);
         return new ResponseEntity<>(newCaseId, HttpStatus.CREATED);
     }
-    // --- ▲▲▲ CHANGE 1: UPDATE THE METHOD SIGNATURE ▲▲▲ ---
 
-    /**
-     * API endpoint to get all cases relevant to the currently logged-in user.
-     * Returns a list of CaseResponseDTOs, which are safe for client consumption.
-     */
     @GetMapping
     @PreAuthorize("isAuthenticated()")
-    // --- ▼▼▼ CHANGE 2: UPDATE THE RESPONSE TYPE ▼▼▼ ---
     public ResponseEntity<List<CaseResponseDTO>> getMyCases() {
         List<CaseResponseDTO> cases = caseService.getCasesForCurrentUser();
         return ResponseEntity.ok(cases);
     }
-    // --- ▲▲▲ CHANGE 2: UPDATE THE RESPONSE TYPE ▲▲▲ ---
 
     /**
      * API endpoint to get a single, specific case by its ID.
@@ -61,12 +47,10 @@ public class CaseController {
      */
     @GetMapping("/{caseId}")
     @PreAuthorize("isAuthenticated()")
-    // --- ▼▼▼ CHANGE 3: UPDATE THE RESPONSE TYPE ▼▼▼ ---
     public ResponseEntity<CaseDetailDTO> getCaseById(@PathVariable UUID caseId) {
         CaseDetailDTO caseResponseDTO = caseService.getCaseById(caseId);
         return ResponseEntity.ok(caseResponseDTO);
     }
-    // --- ▲▲▲ CHANGE 3: UPDATE THE RESPONSE TYPE ▲▲▲ ---
 
 //    /**
 //     * API endpoint to update an existing case.
@@ -81,7 +65,6 @@ public class CaseController {
 //        // For now, we'll leave this unimplemented until we create the UpdateCaseRequest DTO.
 //        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
 //    }
-//    // --- ▲▲▲ CHANGE 4: UPDATE THE RESPONSE TYPE ▲▲▲ ---
 
     /**
      * API endpoint to "soft-delete" (archive) a case. No changes needed here.
@@ -101,7 +84,6 @@ public class CaseController {
     @PutMapping("/{caseId}")
     // You might want to allow Juniors to update cases as well
     @PreAuthorize("hasAnyRole('LAWYER', 'JUNIOR')")
-    // --- ▼▼▼ UPDATE THIS METHOD ▼▼▼ ---
     public ResponseEntity<CaseResponseDTO> updateCase(
             @PathVariable UUID caseId,
             @RequestBody UpdateCaseRequest updateRequest) {
