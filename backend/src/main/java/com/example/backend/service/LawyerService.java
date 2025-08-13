@@ -1,36 +1,45 @@
 package com.example.backend.service;
 
 
-import com.example.backend.dto.lawyerDTOS.CourtColorsRequest;
+import com.example.backend.dto.lawyerDTOS.LawyerProfileDTO;
+import com.example.backend.mapper.LawyerMapper;
 import com.example.backend.model.lawyer.Lawyer;
-import com.example.backend.model.user.User;
 import com.example.backend.repositories.LawyerRepository;
-import com.example.backend.repositories.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Map;
+import java.util.UUID;
 
 @Service
 public class LawyerService {
 
-    private final LawyerRepository lawyerRepository;
-    private final UserRepository userRepository;
+    @Autowired
+    private LawyerRepository lawyerRepository;
 
-    public LawyerService(LawyerRepository lawyerRepository, UserRepository userRepository) {
-        this.lawyerRepository = lawyerRepository;
-        this.userRepository = userRepository;
+    @Autowired
+    private LawyerMapper lawyerMapper;
+
+    // The @Transactional annotation is still essential!
+    @Transactional(readOnly = true)
+    public LawyerProfileDTO getLawyerProfileByUserId(UUID userId) {
+        Lawyer lawyer = lawyerRepository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("Lawyer profile not found for user ID: " + userId));
+
+        // The call to the mapper happens here, inside the transaction.
+        return lawyerMapper.toLawyerProfileDTO(lawyer);
     }
 
+    // Example of how to update the data
     @Transactional
-    public Lawyer saveOrUpdateCourtColors(CourtColorsRequest request){
-        User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+    public LawyerProfileDTO updateCourtColors(UUID userId, Map<String, String> newColors) {
+        Lawyer lawyer = lawyerRepository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("Lawyer profile not found for user ID: " + userId));
 
-        Lawyer lawyer = lawyerRepository.findByUserId(request.getUserId())
-                .orElse(new Lawyer(user, request.getCourtColors()));
+        lawyer.setCourtColors(newColors);
+        Lawyer updatedLawyer = lawyerRepository.save(lawyer);
 
-        lawyer.setCourtColors(request.getCourtColors());
-
-        return lawyerRepository.save(lawyer);
+        return lawyerMapper.toLawyerProfileDTO(updatedLawyer);
     }
-
 }
