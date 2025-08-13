@@ -9,7 +9,7 @@ import java.util.UUID;
 
 // This is a plain Java object (POJO). It has no database annotations.
 // Its only job is to carry data between the service layer and the controller.
-public class CaseDTO {
+public class    CaseDTO {
 
     // --- Core Case Information ---
     private UUID id;
