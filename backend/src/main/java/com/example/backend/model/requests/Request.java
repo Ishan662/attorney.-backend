@@ -62,10 +62,4 @@ public class Request {
 
 }
 
-    // --- Getters and Setters ---
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
- public Case getaCase() { return aCase; }
-    public void setaCase(Case aCase) { this.aCase = aCase; }
-    public User getCreatedByClient() { return createdByClient; }
-    public void setCreatedByClient(User);
+
