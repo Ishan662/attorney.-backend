@@ -4,6 +4,15 @@ package com.example.backend.dto.InviteDTOS;
 public class InvitationDetailsDTO {
     private String email;
     private String fullName; // We can get this from the placeholder user record
+    private String phoneNumber;
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
 
     // Getters and Setters
     public String getEmail() { return email; }

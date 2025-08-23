@@ -68,10 +68,6 @@ public class FirebaseTokenFilter extends OncePerRequestFilter {
         // 2. Check if the user is already fully authenticated in this request's context
         if (SecurityContextHolder.getContext().getAuthentication() == null) {
 
-            // --- ▼▼▼ THIS IS THE NEW, SIMPLIFIED LOGIC ▼▼▼ ---
-
-            // ALWAYS try to load the user's full details. This is where the check for
-            // user status (ACTIVE vs. PENDING) happens.
             try {
                 UserDetails userDetails = this.userDetailsService.loadUserByUsername(uid);
 
@@ -95,7 +91,6 @@ public class FirebaseTokenFilter extends OncePerRequestFilter {
                 System.out.println("User is authenticated but not active. UID: " + uid + ". Status likely pending.");
             }
 
-            // --- ▲▲▲ THIS IS THE NEW, SIMPLIFIED LOGIC ▲▲▲ ---
         }
 
         // 3. Continue the filter chain.

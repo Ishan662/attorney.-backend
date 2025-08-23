@@ -1,6 +1,5 @@
 package com.example.backend.controllers;
 
-// Import the DTO, not the Entity
 import com.example.backend.dto.userDTO.UserDTO;
 import com.example.backend.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +27,16 @@ public class AuthController {
         String firebaseToken = extractToken(authorizationHeader);
         UserDTO userDto = authService.registerNewLawyer(firebaseToken, profileData);
         return ResponseEntity.ok(userDto);
+    }
+
+    @PostMapping("/register-researcher")
+    public ResponseEntity<UserDTO> registerNewResearcher(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestBody(required = false) Map<String, String> profileData) {
+        String firebaseToken = extractToken(authorizationHeader);
+        // Call the consistently named service method
+        UserDTO userDTO = authService.registerNewResearcher(firebaseToken, profileData);
+        return ResponseEntity.ok(userDTO);
     }
 
     @GetMapping("/session")
@@ -60,14 +69,10 @@ public class AuthController {
     }
 
     private String extractToken(String authorizationHeader) {
-        // The logic is now correct:
-        // IF the header is NULL OR it does NOT start with "Bearer "...
         if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
             // ...THEN it is invalid, so we throw an exception.
             throw new IllegalArgumentException("Authorization header is missing or invalid.");
         }
-        // If the code reaches here, the header is valid.
-        // We can safely extract the token.
         return authorizationHeader.substring(7);
     }
 }
