@@ -21,17 +21,16 @@ public class LawyerService {
     @Autowired
     private LawyerMapper lawyerMapper;
 
-    // The @Transactional annotation is still essential!
     @Transactional(readOnly = true)
     public LawyerProfileDTO getLawyerProfileByUserId(UUID userId) {
         Lawyer lawyer = lawyerRepository.findByUserId(userId)
                 .orElseThrow(() -> new RuntimeException("Lawyer profile not found for user ID: " + userId));
 
-        // The call to the mapper happens here, inside the transaction.
+
         return lawyerMapper.toLawyerProfileDTO(lawyer);
     }
 
-    // Example of how to update the data
+
     @Transactional
     public LawyerProfileDTO updateCourtColors(UUID userId, Map<String, String> newColors) {
         Lawyer lawyer = lawyerRepository.findByUserId(userId)
