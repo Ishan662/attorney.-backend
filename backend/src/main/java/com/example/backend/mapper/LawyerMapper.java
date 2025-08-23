@@ -15,8 +15,6 @@ public class LawyerMapper {
 
         dto.setCourtColors(lawyer.getCourtColors());
 
-    // Set the user ID for reference.
-    // This will trigger the lazy loading while the database session is still open.
         if (lawyer.getUser() != null) {
         dto.setUserId(lawyer.getUser().getId());
     }

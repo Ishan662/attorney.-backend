@@ -6,10 +6,9 @@ import java.util.UUID;
 public class LawyerProfileDTO {
     private UUID userId;
 
-    // This is the primary data for this DTO
     private Map<String, String> courtColors;
 
-    // --- Getters and Setters ---
+
     public UUID getUserId() { return userId; }
     public void setUserId(UUID userId) { this.userId = userId; }
     public Map<String, String> getCourtColors() { return courtColors; }
