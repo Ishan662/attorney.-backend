@@ -42,7 +42,6 @@ public class InvitationController {
         return ResponseEntity.ok().build();
     }
 
-    // ▼▼▼ ADD THIS NEW ENDPOINT ▼▼▼
     /**
      * A public endpoint to get the basic details of a pending invitation.
      * This allows the frontend to pre-fill the invitee's email and name.

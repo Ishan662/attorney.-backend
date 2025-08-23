@@ -47,6 +47,7 @@ public class CaseMapper {
 
         // Details
         dto.setCourtName(entity.getCourtName());
+        dto.setCourtType(entity.getCourtType());
         dto.setDescription(entity.getDescription());
 
         // Status & Financials
@@ -83,6 +84,19 @@ public class CaseMapper {
         dto.setCreatedAt(entity.getCreatedAt());
         dto.setUpdatedAt(entity.getUpdatedAt());
 
+        // get the firm name and lawyer name
+        if (entity.getFirm() != null) {
+            dto.setFirmName(entity.getFirm().getFirmName());
+        }
+
+        Optional<String> ownerName = entity.getMembers().stream()
+                .filter(member -> member.getUser().getRole() == AppRole.LAWYER)
+                .map(member -> (member.getUser().getFirstName() + " " + member.getUser().getLastName()).trim())
+                .findFirst(); // Assumes there's one primary lawyer per case membership
+
+        // If a lawyer is found among the members, set their name.
+        ownerName.ifPresent(dto::setOwnerLawyerName);
+
 
         return dto;
     }
@@ -108,6 +122,7 @@ public class CaseMapper {
         if (dto.getCaseNumber() != null) entity.setCaseNumber(dto.getCaseNumber());
         if (dto.getCaseType() != null) entity.setCaseType(dto.getCaseType());
         if (dto.getCourtName() != null) entity.setCourtName(dto.getCourtName());
+        if (dto.getCourtType() != null) entity.setCourtType(dto.getCourtType());
         if (dto.getDescription() != null) entity.setDescription(dto.getDescription());
         if (dto.getClientName() != null) entity.setClientName(dto.getClientName());
         if (dto.getClientPhone() != null) entity.setClientPhone(dto.getClientPhone());

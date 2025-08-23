@@ -17,11 +17,13 @@ public class CaseDetailDTO {
     private String caseType;
     private String description;
     private String courtName;
+    private String courtType;
     private CaseStatus status;
 
     // Parties
     private String clientName;
     private String clientPhone;
+    private String clientEmail;
     private String opposingPartyName;
     private String junior; // Name of an assigned junior
 
@@ -34,6 +36,41 @@ public class CaseDetailDTO {
     private List<HearingDTO> hearings;
     // private List<DocumentDTO> documents; // For the future
 
+    // details of the lawyer and firm
+    private String ownerLawyerName; // To hold the name of the primary lawyer
+    private String firmName;
+
+    public String getCourtType() {
+        return courtType;
+    }
+
+    public void setCourtType(String courtType) {
+        this.courtType = courtType;
+    }
+
+    public String getOwnerLawyerName() {
+        return ownerLawyerName;
+    }
+
+    public void setOwnerLawyerName(String ownerLawyerName) {
+        this.ownerLawyerName = ownerLawyerName;
+    }
+
+    public String getFirmName() {
+        return firmName;
+    }
+
+    public void setFirmName(String firmName) {
+        this.firmName = firmName;
+    }
+
+    public String getClientEmail() {
+        return clientEmail;
+    }
+
+    public void setClientEmail(String clientEmail) {
+        this.clientEmail = clientEmail;
+    }
 
     public UUID getId() {
         return id;
