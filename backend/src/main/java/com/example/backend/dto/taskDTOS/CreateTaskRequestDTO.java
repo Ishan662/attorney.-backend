@@ -1,12 +1,20 @@
 package com.example.backend.dto.taskDTOS;
 
+import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 public class CreateTaskRequestDTO {
 
     private String title;
     private String description;
+    private String type;
     private UUID assignedToUserId;
+    private UUID caseId;
+    private List<String> documentUrls;
+    private Date dueDate;
+
+    // ------------------- Getters & Setters -------------------
 
     public String getTitle() {
         return title;
@@ -24,11 +32,43 @@ public class CreateTaskRequestDTO {
         this.description = description;
     }
 
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
     public UUID getAssignedToUserId() {
         return assignedToUserId;
     }
 
     public void setAssignedToUserId(UUID assignedToUserId) {
         this.assignedToUserId = assignedToUserId;
+    }
+
+    public UUID getCaseId() {
+        return caseId;
+    }
+
+    public void setCaseId(UUID caseId) {
+        this.caseId = caseId;
+    }
+
+    public List<String> getDocumentUrls() {
+        return documentUrls;
+    }
+
+    public void setDocumentUrls(List<String> documentUrls) {
+        this.documentUrls = documentUrls;
+    }
+
+    public Date getDueDate() {
+        return dueDate;
+    }
+
+    public void setDueDate(Date dueDate) {
+        this.dueDate = dueDate;
     }
 }
