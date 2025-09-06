@@ -1,4 +1,3 @@
-// >> In a new file: mapper/HearingMapper.java
 package com.example.backend.mapper;
 
 import com.example.backend.dto.hearingDTOS.CreateHearingDto;
