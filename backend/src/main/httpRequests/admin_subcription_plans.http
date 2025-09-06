@@ -1,0 +1,123 @@
+### =================================================================
+### Admin Subscription Plan Management - Test File
+### =================================================================
+
+### File-level variable for the Admin's authentication token.
+### !! IMPORTANT !!
+### Replace this placeholder with a REAL, valid Firebase ID Token from a logged-in ADMIN user.
+@admin_auth_token = Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6ImVmMjQ4ZjQyZjc0YWUwZjk0OTIwYWY5YTlhMDEzMTdlZjJkMzVmZTEiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vYXR0b3JuZXktNDU4NjIiLCJhdWQiOiJhdHRvcm5leS00NTg2MiIsImF1dGhfdGltZSI6MTc1NzE0MDQyNSwidXNlcl9pZCI6IlQwVjF5RjV2UUFoTDVlWmt0OTNGVFdCYjlwTjIiLCJzdWIiOiJUMFYxeUY1dlFBaEw1ZVprdDkzRlRXQmI5cE4yIiwiaWF0IjoxNzU3MTQwNDI1LCJleHAiOjE3NTcxNDQwMjUsImVtYWlsIjoiZGFyc2hhbmEyMDIxc3VqYW5AZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImZpcmViYXNlIjp7ImlkZW50aXRpZXMiOnsiZW1haWwiOlsiZGFyc2hhbmEyMDIxc3VqYW5AZ21haWwuY29tIl19LCJzaWduX2luX3Byb3ZpZGVyIjoicGFzc3dvcmQifX0.l_yIPQf464TObuu3KmLaFBMaKjekYrar-ojc-HiQO84aseZ-j3IwGNAb3K3yGIw9Llm407edE6rht0404cj91HnRUZvfZUpmtygSsO-muIYcMvj7TUx7szNu6RGnXO_g0tuyMij8fdDMUYyV0o5ZTwd5dSy5aGJb0nSGDKxi3NTNYIkFXQw4ptVpRpZmFVE-jEmN7SbmX9MOwfoCImVlja9KekLZJsaukpVKmYf4Hzy9QwWoVm3FcUlImXUjCJucAK3WdXftXP3-WFmylx5HqFfMk_Ki0ypOj-AF_Z3UMS8xMVh0OgbwEMpT29lu570KLAvcxsxP9ovdU3KjJHj8wg
+
+
+
+### File-level variable to hold the ID of a newly created plan for testing.
+@plan_id =
+
+
+### =================================================================
+### 1. Get All Plans (GET /api/admin/plans)
+### =================================================================
+# This should return a list of all subscription plans in the database,
+# including the 'TRIAL' and 'RESEARCHER_TRIAL' plans.
+# This request will FAIL with a 403 Forbidden if the token is not from an ADMIN.
+GET http://localhost:8080/api/admin/plans
+Authorization: {{admin_auth_token}}
+
+
+### =================================================================
+### 2. Create a New Plan (POST /api/admin/plans)
+### =================================================================
+# This creates a new "Lawyer Pro" subscription plan.
+# It will only succeed if the token belongs to an 'ADMIN'.
+POST http://localhost:8080/api/admin/plans
+Content-Type: application/json
+Authorization: {{admin_auth_token}}
+
+{
+  "planName": "Lawyer Pro",
+  "priceMonthly": 49.99,
+  "features": {
+    "max_cases": 1000,
+    "max_juniors": 5,
+    "ai_chatbot_access": true,
+    "custom_calendar": true,
+    "document_analysis": false
+  },
+  "isActive": true
+}
+
+> {%
+    // This script captures the ID of the newly created plan
+    // and stores it in a variable named 'plan_id' for subsequent requests.
+    client.global.set("plan_id", response.body.id);
+%}
+
+
+### =================================================================
+### 3. Get the Newly Created Plan by ID (GET /api/admin/plans/{id})
+### =================================================================
+# This uses the 'plan_id' captured from the request above to fetch the
+# details of the single plan we just created.
+GET http://localhost:8080/api/admin/plans/3
+Authorization: {{admin_auth_token}}
+
+
+### =================================================================
+### 4. Update the Plan (PUT /api/admin/plans/{id})
+### =================================================================
+# This request updates the "Lawyer Pro" plan we just created.
+# We are changing the price from 49.99 to 59.99 and enabling the 'document_analysis' feature.
+PUT http://localhost:8080/api/admin/plans/3
+Content-Type: application/json
+Authorization: {{admin_auth_token}}
+
+{
+  "planName": "Lawyer Pro",
+  "priceMonthly": 59.99,
+  "features": {
+    "max_cases": 1000,
+    "max_juniors": 5,
+    "ai_chatbot_access": true,
+    "custom_calendar": true,
+    "document_analysis": true
+  },
+  "isActive": true
+}
+
+
+### =================================================================
+### 5. Verify the Update (GET /api/admin/plans/{id})
+### =================================================================
+# Run this request again after the PUT request.
+# The response should now show the new price (59.99) and the updated features.
+GET http://localhost:8080/api/admin/plans/3
+Authorization: {{admin_auth_token}}
+
+
+### =================================================================
+### 6. Test Failure Case: Create a Duplicate Plan (POST)
+### =================================================================
+# This request attempts to create another plan with the name "Lawyer Pro".
+# Your backend service logic should catch this.
+# This request is EXPECTED TO FAIL with a 409 Conflict status.
+POST http://localhost:8080/api/admin/plans
+Content-Type: application/json
+Authorization: {{admin_auth_token}}
+
+{
+  "planName": "Lawyer Pro",
+  "priceMonthly": 49.99,
+  "features": {},
+  "isActive": true
+}
+
+
+### =================================================================
+### 7. Test Failure Case: Non-Admin Access (GET)
+### =================================================================
+# !! IMPORTANT !!
+# For this test, manually replace {{admin_auth_token}} with a token from a regular LAWYER user.
+# This request is EXPECTED TO FAIL with a 403 Forbidden status because
+# the entire /api/admin/** path is protected.
+GET http://localhost:8080/api/admin/plans
+Authorization: {{admin_auth_token}}
+# Replace the line above with: Authorization: Bearer <LAWYER_TOKEN_HERE>
