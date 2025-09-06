@@ -1,7 +1,5 @@
-// >> In a new file: model/hearing/Hearing.java
 package com.example.backend.model.hearing;
 
-// We now need to import the related entities from their own packages
 import com.example.backend.model.cases.Case;
 import com.example.backend.model.user.User;
 
@@ -9,9 +7,7 @@ import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.UUID;
 
-/**
- * Represents a single hearing event associated with a legal Case.
- */
+
 @Entity
 @Table(name = "hearings")
 public class Hearing {
@@ -29,6 +25,10 @@ public class Hearing {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "created_by_user_id", nullable = false)
     private User createdByUser;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "lawyer_id", nullable = false)
+    private User lawyer;
 
     @Column(nullable = false)
     private String title;
@@ -52,6 +52,15 @@ public class Hearing {
 
 
     // --- Getters and Setters ---
+
+    public User getLawyer() {
+        return lawyer;
+    }
+
+    public void setLawyer(User lawyer) {
+        this.lawyer = lawyer;
+    }
+
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
     public Case getaCase() { return aCase; }
