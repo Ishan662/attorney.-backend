@@ -10,24 +10,36 @@ import java.util.UUID;
 @NoArgsConstructor
 public class TaskResponseDTO {
     private UUID id;
+    private UUID caseId;
     private String title;
     private String description;
-    private UUID assignedByUserId;
-    private UUID assignedToUserId;
-    private UUID caseId;
+    private UUID assignedByUser;
+    private UUID assignedToUser;
     private String status;
 
-    public static JsonToken builder() {
-        return null;
+
+    public UUID getAssignedByUser() {
+        return assignedByUser;
     }
 
+    public void setAssignedByUser(UUID assignedByUser) {
+        this.assignedByUser = assignedByUser;
+    }
+
+    public UUID getAssignedToUser() {
+        return assignedToUser;
+    }
+
+    public void setAssignedToUser(UUID assignedToUser) {
+        this.assignedToUser = assignedToUser;
+    }
 
     public String getStatus() {
         return status;
     }
 
     public void setStatus(String status) {
-
+        this.status = status; // ✅ fixed
     }
 
     public UUID getCaseId() {
@@ -36,22 +48,6 @@ public class TaskResponseDTO {
 
     public void setCaseId(UUID caseId) {
         this.caseId = caseId;
-    }
-
-    public UUID getAssignedToUserId() {
-        return assignedToUserId;
-    }
-
-    public void setAssignedToUserId(UUID assignedToUserId) {
-        this.assignedToUserId = assignedToUserId;
-    }
-
-    public UUID getAssignedByUserId() {
-        return assignedByUserId;
-    }
-
-    public void setAssignedByUserId(UUID assignedByUserId) {
-        this.assignedByUserId = assignedByUserId;
     }
 
     public String getDescription() {
@@ -77,4 +73,5 @@ public class TaskResponseDTO {
     public void setId(UUID id) {
         this.id = id;
     }
+
 }

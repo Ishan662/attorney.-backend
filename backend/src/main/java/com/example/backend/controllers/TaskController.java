@@ -2,6 +2,7 @@ package com.example.backend.controllers;
 
 import com.example.backend.dto.taskDTOS.CreateTaskRequestDTO;
 import com.example.backend.dto.taskDTOS.TaskResponseDTO;
+import com.example.backend.dto.taskDTOS.UpdateTaskRequestDTO;
 import com.example.backend.service.TaskService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,23 +18,35 @@ public class TaskController {
 
     private final TaskService taskService;
 
-    public TaskController(TaskService taskService) {
+    public TaskController(TaskService taskService)
+    {
         this.taskService = taskService;
     }
 
-    @PostMapping
-    @PreAuthorize("hasRole('LAWYER')")
-    public ResponseEntity<TaskResponseDTO> assignTask(
-            @PathVariable UUID caseId,
-            @RequestBody CreateTaskRequestDTO request) {
 
-        TaskResponseDTO task = taskService.assignTask(caseId, request);
+    @PostMapping
+    @PreAuthorize("hasAnyRole('LAWYER')")
+
+    public ResponseEntity<TaskResponseDTO> assignTask(
+            @RequestBody CreateTaskRequestDTO request)
+    {
+        TaskResponseDTO task = taskService.assignTask(request);
         return new ResponseEntity<>(task, HttpStatus.CREATED);
     }
 
-    @GetMapping
+    @GetMapping("/{caseId}")
     @PreAuthorize("hasAnyRole('LAWYER', 'JUNIOR')")
     public ResponseEntity<List<TaskResponseDTO>> getTasksForCase(@PathVariable UUID caseId) {
         return ResponseEntity.ok(taskService.getTasksByCaseId(caseId));
     }
+
+    @PutMapping("/update")
+    @PreAuthorize("hasRole('JUNIOR')")
+    public ResponseEntity<TaskResponseDTO> updateTask(@RequestBody UpdateTaskRequestDTO request) {
+        TaskResponseDTO updatedTask = taskService.updateTask(request);
+        return ResponseEntity.ok(updatedTask);
+    }
+
+
+
 }

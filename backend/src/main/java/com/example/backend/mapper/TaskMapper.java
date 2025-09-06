@@ -12,19 +12,15 @@ public class TaskMapper {
             return null;
         }
 
-        TaskResponseDTO dto = new TaskResponseDTO();
-
-        dto.setId(task.getId());
-        dto.setTitle(task.getTitle());
-        dto.setDescription(task.getDescription());
-        dto.setAssignedByUserId(task.getAssignedByUserId());
-        dto.setAssignedToUserId(task.getAssignedToUserId());
-        dto.setCaseId(task.getCaseId());
-
-        // Ensure you handle the TaskStatus enum correctly
-        if (task.getStatus() != null) {
-            dto.setStatus(task.getStatus().name());
-        }
+        TaskResponseDTO dto = TaskResponseDTO.builder()
+                .id(task.getId())
+                .title(task.getTitle())
+                .description(task.getDescription())
+                .assignedByUser(task.getAssignedByUser() != null ? task.getAssignedByUser().getId() : null)
+                .assignedToUser(task.getAssignedToUser() != null ? task.getAssignedToUser().getId() : null)
+                .caseId(task.getCaseId())
+                .status(task.getStatus() != null ? task.getStatus().name() : null)
+                .build();
 
         return dto;
     }
