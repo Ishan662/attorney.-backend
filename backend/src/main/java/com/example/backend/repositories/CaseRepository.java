@@ -40,7 +40,7 @@ public interface CaseRepository extends JpaRepository<Case, UUID> {
             "     :searchTerm IS NULL OR :searchTerm = '') " +
             "AND (:caseType IS NULL OR c.caseType = :caseType) " +
             "AND (:court IS NULL OR c.courtName = :court) " +
-            "AND (:status IS NULL OR c.status = :status) " + // Assumes Case entity has a 'status' field of type CaseStatus
+            "AND (:status IS NULL OR c.status = :status) " +
             "ORDER BY c.createdAt DESC")
     List<Case> findCasesForLawyerWithFilters(
             @Param("firmId") UUID firmId,

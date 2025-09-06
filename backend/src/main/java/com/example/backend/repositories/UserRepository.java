@@ -20,4 +20,11 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     @Query("SELECT u.status FROM User u WHERE u.firebaseUid = :firebaseUid")
     Optional<UserStatus> findStatusByFirebaseUid(@Param("firebaseUid") String firebaseUid);
     List<User> findByFirmIdAndRole(UUID firmId, AppRole role);
+
+    Long countByFirmIdAndRole(UUID firmId, AppRole role);
+    Optional<User> findFirstByFirmIdAndRole(UUID firmId, AppRole role);
+
+    List<User> findAll();
+
+    long countByRole(AppRole role);
 }
