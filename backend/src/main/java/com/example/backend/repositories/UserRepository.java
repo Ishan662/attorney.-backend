@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -27,4 +28,10 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     List<User> findAll();
 
     long countByRole(AppRole role);
+
+    long countByRoleAndStatus(AppRole role, UserStatus status);
+
+    long countByCreatedAtAfter(Instant date);
+
+    long countByRoleAndCreatedAtAfter(AppRole appRole, Instant oneMonthAgo);
 }
