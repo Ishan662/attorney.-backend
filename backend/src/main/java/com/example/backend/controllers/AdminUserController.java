@@ -1,5 +1,6 @@
 package com.example.backend.controllers;
 
+import com.example.backend.dto.dashboardDTOS.AdminDashboardStatsDTO;
 import com.example.backend.dto.userDTO.AdminUserViewDTO;
 import com.example.backend.dto.userDTO.UpdateUserStatusRequest;
 import com.example.backend.service.AdminUserService;
@@ -49,5 +50,11 @@ public class AdminUserController {
     public ResponseEntity<Map<String, Long>> getUserCounts() {
         Map<String, Long> counts = adminUserService.getUserCounts();
         return ResponseEntity.ok(counts);
+    }
+
+    @GetMapping("/dashboard-stats")
+    public ResponseEntity<AdminDashboardStatsDTO> getDashboardStats() {
+        AdminDashboardStatsDTO stats = adminUserService.getDashboardStatistics();
+        return ResponseEntity.ok(stats);
     }
 }

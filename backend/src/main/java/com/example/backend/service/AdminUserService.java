@@ -1,5 +1,6 @@
 package com.example.backend.service;
 
+import com.example.backend.dto.dashboardDTOS.AdminDashboardStatsDTO;
 import com.example.backend.dto.userDTO.AdminUserViewDTO;
 import com.example.backend.model.AppRole;
 import com.example.backend.model.UserStatus;
@@ -10,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -125,6 +128,36 @@ public class AdminUserService {
         userCounts.put("researchers", userRepository.countByRole(AppRole.RESEARCHER));
 
         return userCounts;
+    }
+
+    public AdminDashboardStatsDTO getDashboardStatistics() {
+        AdminDashboardStatsDTO stats = new AdminDashboardStatsDTO();
+
+        // --- Calculate Lawyer Stats ---
+        long totalLawyers = userRepository.countByRole(AppRole.LAWYER);
+        long activeLawyers = userRepository.countByRoleAndStatus(AppRole.LAWYER, UserStatus.ACTIVE);
+        stats.setTotalLawyers(totalLawyers);
+        stats.setActiveLawyers(activeLawyers);
+        stats.setInactiveLawyers(totalLawyers - activeLawyers);
+
+        // --- Calculate Junior Stats ---
+        stats.setTotalJuniors(userRepository.countByRole(AppRole.JUNIOR));
+        stats.setActiveJuniors(userRepository.countByRoleAndStatus(AppRole.JUNIOR, UserStatus.ACTIVE));
+
+        // --- Calculate Client Stats ---
+        stats.setTotalClients(userRepository.countByRole(AppRole.CLIENT));
+        stats.setActiveClients(userRepository.countByRoleAndStatus(AppRole.CLIENT, UserStatus.ACTIVE));
+
+        // --- Calculate Researcher Stats ---
+        stats.setTotalResearchers(userRepository.countByRole(AppRole.RESEARCHER));
+
+        // --- Calculate Growth Metrics ---
+        Instant oneMonthAgo = Instant.now().minus(30, ChronoUnit.DAYS);
+        // We can count all new users, or just new lawyers. Let's count lawyers.
+        long newLawyersThisMonth = userRepository.countByRoleAndCreatedAtAfter(AppRole.LAWYER, oneMonthAgo);
+        stats.setNewSignupsThisMonth(newLawyersThisMonth);
+
+        return stats;
     }
 
 
