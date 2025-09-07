@@ -102,7 +102,6 @@ public class CaseMapper {
     }
 
 
-    // --- ▼▼▼ ADD THIS NEW METHOD ▼▼▼ ---
     /**
      * Updates an existing Case entity from an UpdateCaseRequest DTO.
      * It only maps the fields present in the DTO, ensuring that immutable fields
