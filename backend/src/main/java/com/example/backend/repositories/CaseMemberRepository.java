@@ -1,4 +1,3 @@
-// >> In a new file: CaseMemberRepository.java
 package com.example.backend.repositories;
 
 import com.example.backend.model.cases.CaseMember;
