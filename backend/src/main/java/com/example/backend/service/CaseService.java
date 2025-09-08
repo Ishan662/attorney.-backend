@@ -24,6 +24,7 @@ import com.example.backend.repositories.HearingRepository;
 import com.example.backend.repositories.CaseMemberRepository;
 
 // Other imports...
+import com.example.backend.service.FirebaseChat.FirebaseChatService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.AccessDeniedException;
@@ -33,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.logging.Level;
@@ -47,21 +49,23 @@ public class CaseService {
     private final HearingRepository hearingRepository;
     private final CaseMemberRepository caseMemberRepository;
     private final CaseDetailMapper caseDetailMapper;
+    private final FirebaseChatService firebaseChatService;
 
     @Autowired
     public CaseService(CaseRepository caseRepository, UserRepository userRepository, CaseMapper caseMapper,
-                       HearingRepository hearingRepository, CaseMemberRepository caseMemberRepository, CaseDetailMapper caseDetailMapper) {
+                       HearingRepository hearingRepository, CaseMemberRepository caseMemberRepository, CaseDetailMapper caseDetailMapper, FirebaseChatService firebaseChatService) {
         this.caseRepository = caseRepository;
         this.userRepository = userRepository;
         this.caseMapper = caseMapper;
         this.hearingRepository = hearingRepository;
         this.caseMemberRepository = caseMemberRepository;
         this.caseDetailMapper = caseDetailMapper;
+        this.firebaseChatService = firebaseChatService;
     }
 
     @Transactional
     public UUID createCase(CreateCaseRequest request) {
-        // print comming request details
+        // print coming request details
         System.out.println("Court Type:" + request.getCourtType());
 
         // 1. Get the authenticated lawyer creating the case.
@@ -119,6 +123,13 @@ public class CaseService {
             hearingRepository.save(initialHearing);
         }
 
+        // ==========================================================
+        //  START: NEW FIREBASE CHAT INTEGRATION LOGIC
+        // ==========================================================
+
+        List<User> chatMembers = new ArrayList<>();
+        chatMembers.add(lawyer); // Add the lawyer creating the case
+
         // 4. IMPORTANT: NO client user is created here. The invitation flow is now separate.
 
         // 5. If a junior was associated, find them and add them as a case member.
@@ -130,10 +141,22 @@ public class CaseService {
                 throw new SecurityException("Cannot assign a junior from another firm.");
             }
             caseMemberRepository.save(new CaseMember(savedCase, juniorUser));
+            chatMembers.add(juniorUser); // Also add the junior to the chat members list
         }
 
         // 6. The lawyer who creates the case is automatically a member so they can see it in their "My Cases" view.
         caseMemberRepository.save(new CaseMember(savedCase, lawyer));
+
+        // Only search for the client by email. If they already exist, add them.
+        userRepository.findByEmail(request.getClientEmail())
+                .ifPresent(chatMembers::add);
+
+        // Create the channel with whomever is currently available
+        String channelId = firebaseChatService.createCaseChannel(savedCase.getId(), savedCase.getCaseTitle(), chatMembers);
+        if (channelId != null) {
+            savedCase.setChatChannelId(channelId);
+            caseRepository.save(savedCase);
+        }
 
         return savedCase.getId();
     }
