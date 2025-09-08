@@ -4,6 +4,7 @@ package com.example.backend.service;
 import com.example.backend.dto.hearingDTOS.CreateHearingDto;
 import com.example.backend.dto.hearingDTOS.HearingDTO;
 import com.example.backend.dto.hearingDTOS.UpdateHearingDto;
+import com.example.backend.exception.HearingValidationException;
 import com.example.backend.mapper.HearingMapper;
 import com.example.backend.model.AppRole;
 import com.example.backend.model.cases.Case;
@@ -12,6 +13,7 @@ import com.example.backend.model.user.User;
 import com.example.backend.repositories.CaseRepository;
 import com.example.backend.repositories.HearingRepository;
 import com.example.backend.repositories.UserRepository;
+import com.example.backend.util.ValidationResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -28,6 +30,8 @@ public class HearingService {
     @Autowired private CaseRepository caseRepository;
     @Autowired private UserRepository userRepository;
     @Autowired private HearingMapper hearingMapper;
+    @Autowired
+    private CalenderValidationService calenderValidationService;
 
     public List<HearingDTO> getHearingsForCase(UUID caseId) {
         User currentUser = getCurrentUser();
@@ -42,18 +46,30 @@ public class HearingService {
         Case aCase = findCaseAndVerifyAccess(caseId, currentUser);
 
         UUID firmId = aCase.getFirm().getId();
-
         User lawyer = userRepository.findFirstByFirmIdAndRole(firmId, AppRole.LAWYER)
                 .orElseThrow(() -> new RuntimeException("No lawyer found for this firm"));
 
+        // Map DTO → Entity
         Hearing newHearing = hearingMapper.createDtoToEntity(createDto);
         newHearing.setLawyer(lawyer);
         newHearing.setaCase(aCase);
         newHearing.setCreatedByUser(currentUser);
 
+        // Fetch existing hearings for this lawyer on the same day
+        List<Hearing> existing = hearingRepository
+                .findByLawyerIdAndDate(lawyer.getId(), newHearing.getStartTime().toLocalDate());
+
+        // Validate travel & overlap
+        ValidationResult result = calenderValidationService.validateNewHearing(newHearing, existing);
+        if (!result.isValid()) {
+            throw new HearingValidationException(result.getMessage());
+        }
+
+        // Save only after validation passes
         Hearing savedHearing = hearingRepository.save(newHearing);
         return hearingMapper.toHearingDto(savedHearing);
     }
+
 
     // Private helper to get current user and verify their access to a case
     private User getCurrentUser() {

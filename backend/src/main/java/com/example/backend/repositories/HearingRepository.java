@@ -5,6 +5,7 @@ import com.example.backend.model.hearing.Hearing;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -12,5 +13,11 @@ import java.util.UUID;
 public interface HearingRepository extends JpaRepository<Hearing, UUID> {
     List<Hearing> findAllByaCase_IdOrderByHearingDateAsc(UUID caseId);
 
+    List<Hearing> findByLawyerIdAndStartTimeBetween(Long lawyerId, LocalDate startOfDay, LocalDate endOfDay);
+
     List<Hearing> findByaCase_IdOrderByHearingDateAsc(UUID id);
+
+    default List<Hearing> findByLawyerIdAndDate(Long lawyerId, LocalDate date) {
+        return findByLawyerIdAndStartTimeBetween(lawyerId, date.atStartOfDay(), date.atTime(23,59));
+    }
 }
