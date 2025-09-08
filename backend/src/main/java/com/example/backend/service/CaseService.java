@@ -120,6 +120,7 @@ public class CaseService {
             initialHearing.setCreatedByUser(lawyer);
             initialHearing.setTitle("Initial Hearing");
             initialHearing.setLocation(request.getCourt());
+            initialHearing.setLawyer(lawyer);
             hearingRepository.save(initialHearing);
         }
 
