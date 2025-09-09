@@ -71,4 +71,7 @@ public interface CaseRepository extends JpaRepository<Case, UUID> {
             @Param("court") String court,
             @Param("status") CaseStatus status
     );
+
+    @Query("SELECT c FROM Case c JOIN c.members m WHERE m.user.id = :userId")
+    List<Case> findCasesByUserId(@Param("userId") UUID userId);
 }

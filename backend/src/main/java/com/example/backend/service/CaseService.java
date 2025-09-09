@@ -7,6 +7,8 @@ import com.example.backend.dto.caseDTOS.CreateCaseRequest;
 
 // Mapper and Model classes
 import com.example.backend.dto.caseDTOS.UpdateCaseRequest;
+import com.example.backend.dto.chatDTOS.ChatChannelDTO;
+import com.example.backend.dto.chatDTOS.MemberDTO;
 import com.example.backend.mapper.CaseDetailMapper;
 import com.example.backend.mapper.CaseMapper;
 import com.example.backend.model.AppRole;
@@ -318,5 +320,29 @@ public class CaseService {
         String firebaseUid = SecurityContextHolder.getContext().getAuthentication().getName();
         return userRepository.findByFirebaseUid(firebaseUid)
                 .orElseThrow(() -> new RuntimeException("Authenticated user not found in database."));
+    }
+
+    public List<ChatChannelDTO> getChatChannelsForCurrentUser() {
+        User currentUser = getCurrentUser();
+        List<Case> cases = caseRepository.findCasesByUserId(currentUser.getId());
+
+        return cases.stream().map(aCase -> {
+            ChatChannelDTO channelDTO = new ChatChannelDTO();
+            channelDTO.setCaseId(aCase.getId());
+            channelDTO.setChatChannelId(aCase.getChatChannelId());
+            channelDTO.setCaseTitle(aCase.getCaseTitle());
+
+            List<MemberDTO> memberDTOs = aCase.getMembers().stream().map(member -> {
+                MemberDTO memberDTO = new MemberDTO();
+                User memberUser = member.getUser();
+                memberDTO.setUserId(memberUser.getId());
+                memberDTO.setName(memberUser.getFirstName() + " " + memberUser.getLastName());
+                memberDTO.setRole(memberUser.getRole());
+                return memberDTO;
+            }).collect(Collectors.toList());
+
+            channelDTO.setMembers(memberDTOs);
+            return channelDTO;
+        }).collect(Collectors.toList());
     }
 }
