@@ -3,13 +3,16 @@ package com.example.backend.model.tasks;
 import com.example.backend.model.user.User;
 import jakarta.persistence.*;
 import lombok.Builder;
+import lombok.Data;
 
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
+
 @Entity
 @Builder
+@Data
 
 public class Task {
 
