@@ -33,12 +33,11 @@ public class HearingController {
     // This endpoint also needs its own path
     @PostMapping("/for-case/{caseId}")
     @PreAuthorize("hasAnyRole('LAWYER', 'JUNIOR')")
-    public ResponseEntity<HearingDTO> createHearing(@PathVariable UUID caseId, @RequestBody CreateHearingDto createDto) {
+    public ResponseEntity<?> createHearing(@PathVariable UUID caseId, @RequestBody CreateHearingDto createDto) {
         try {
             HearingDTO newHearing = hearingService.createHearingForCase(caseId, createDto);
             return new ResponseEntity<>(newHearing, HttpStatus.CREATED);
         } catch (HearingValidationException ex) {
-            // If validation fails (overlap or impossible travel)
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
                     .body(new ErrorResponse(ex.getMessage()));
@@ -50,7 +49,7 @@ public class HearingController {
      */
     @PutMapping("/{hearingId}")
     @PreAuthorize("hasAnyRole('LAWYER', 'JUNIOR')")
-    public ResponseEntity<HearingDTO> updateHearing(
+    public ResponseEntity<?> updateHearing(
             @PathVariable UUID hearingId,
             @RequestBody UpdateHearingDto updateDto) {
         try {
