@@ -1,5 +1,6 @@
 package com.example.backend.service;
 
+import com.example.backend.dto.calendarValidationDTOS.TravelInfoDTO;
 import com.example.backend.model.hearing.Hearing;
 import com.example.backend.util.ValidationResult;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,7 +25,7 @@ public class CalenderValidationService {
     /**
      * Fetch travel duration using Google Distance Matrix API
      */
-    public Duration getTravelDuration(String origin, String destination) {
+    public TravelInfoDTO getTravelDuration(String origin, String destination) {
         String url = DISTANCE_MATRIX_API_URL
                 + "&origins=" + origin
                 + "&destinations=" + destination
@@ -35,7 +36,8 @@ public class CalenderValidationService {
 
         if (response != null && "OK".equals(response.getStatus())) {
             long durationInSeconds = response.getRows().get(0).getElements().get(0).getDuration().getValue();
-            return Duration.ofSeconds(durationInSeconds);
+            String text = response.getRows().get(0).getElements().get(0).getDuration().getText();
+            return new TravelInfoDTO(durationInSeconds, text);
         }
         return null;
     }
@@ -60,15 +62,9 @@ public class CalenderValidationService {
 
             // 2. Travel feasibility check
             if (existingEnd.isBefore(newStart)) {
-                Duration travelTime = getTravelDuration(existingLocation, newLocation);
-                if (travelTime != null) {
-                    LocalDateTime earliestArrival = existingEnd.plus(travelTime);
-                    if (earliestArrival.isAfter(newStart)) {
-                        return ValidationResult.fail(
-                                "Not enough travel time between hearings at " +
-                                        existingLocation + " and " + newLocation
-                        );
-                    }
+                TravelInfoDTO travelInfo = getTravelDuration(existingLocation, newLocation);
+                if (travelInfo != null) {
+                    return ValidationResult.ok(travelInfo.getSeconds(), travelInfo.getText());
                 }
             }
         }
