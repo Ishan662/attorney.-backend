@@ -50,6 +50,7 @@ public class CalenderValidationService {
         LocalDateTime newEnd = newHearing.getEndTime();
         String newLocation = newHearing.getLocation();
 
+
         for (Hearing existing : existingHearings) {
             LocalDateTime existingStart = existing.getStartTime();
             LocalDateTime existingEnd = existing.getEndTime();
