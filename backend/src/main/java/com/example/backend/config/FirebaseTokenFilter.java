@@ -29,7 +29,6 @@ import java.util.Optional;
 public class FirebaseTokenFilter extends OncePerRequestFilter {
 
     private final UserDetailsService userDetailsService;
-    // --- ▼▼▼ INJECT THE USER REPOSITORY DIRECTLY ▼▼▼ ---
     private final UserRepository userRepository;
 
     @Autowired
