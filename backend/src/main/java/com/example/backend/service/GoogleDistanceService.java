@@ -1,9 +1,10 @@
 package com.example.backend.service;
 
 import com.example.backend.dto.calendarValidationDTOS.TravelInfoDTO;
+import com.example.backend.repositories.DistanceServiceRepository;
 import org.springframework.web.client.RestTemplate;
 
-public class GoogleDistanceService {
+public class GoogleDistanceService implements DistanceServiceRepository {
     private String GoogleApiKey;
 
     private static final  String DISTANCE_MATRIX_API_URL =

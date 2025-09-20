@@ -1,9 +1,10 @@
+
+// >> In your existing file: controllers/HearingController.java
 package com.example.backend.controllers;
 
 import com.example.backend.dto.hearingDTOS.CreateHearingDto;
 import com.example.backend.dto.hearingDTOS.HearingDTO;
 import com.example.backend.dto.hearingDTOS.UpdateHearingDto; // <-- Import the new DTO
-import com.example.backend.exception.HearingValidationException;
 import com.example.backend.service.HearingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -11,7 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-        import java.util.List;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -33,15 +34,9 @@ public class HearingController {
     // This endpoint also needs its own path
     @PostMapping("/for-case/{caseId}")
     @PreAuthorize("hasAnyRole('LAWYER', 'JUNIOR')")
-    public ResponseEntity<?> createHearing(@PathVariable UUID caseId, @RequestBody CreateHearingDto createDto) {
-        try {
-            HearingDTO newHearing = hearingService.createHearingForCase(caseId, createDto);
-            return new ResponseEntity<>(newHearing, HttpStatus.CREATED);
-        } catch (HearingValidationException ex) {
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body(new ErrorResponse(ex.getMessage()));
-        }
+    public ResponseEntity<HearingDTO> createHearing(@PathVariable UUID caseId, @RequestBody CreateHearingDto createDto) {
+        HearingDTO newHearing = hearingService.createHearingForCase(caseId, createDto);
+        return new ResponseEntity<>(newHearing, HttpStatus.CREATED);
     }
 
     /**
@@ -49,17 +44,11 @@ public class HearingController {
      */
     @PutMapping("/{hearingId}")
     @PreAuthorize("hasAnyRole('LAWYER', 'JUNIOR')")
-    public ResponseEntity<?> updateHearing(
+    public ResponseEntity<HearingDTO> updateHearing(
             @PathVariable UUID hearingId,
             @RequestBody UpdateHearingDto updateDto) {
-        try {
-            HearingDTO updatedHearing = hearingService.updateHearing(hearingId, updateDto);
-            return ResponseEntity.ok(updatedHearing);
-        } catch (HearingValidationException ex) {
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body(new ErrorResponse(ex.getMessage()));
-        }
+        HearingDTO updatedHearing = hearingService.updateHearing(hearingId, updateDto);
+        return ResponseEntity.ok(updatedHearing);
     }
 
     /**
@@ -70,12 +59,6 @@ public class HearingController {
     public ResponseEntity<Void> deleteHearing(@PathVariable UUID hearingId) {
         hearingService.deleteHearing(hearingId);
         return ResponseEntity.noContent().build(); // 204 No Content is standard for successful delete
-    }
-
-    public static class ErrorResponse {
-        private final String message;
-        public ErrorResponse(String message) { this.message = message; }
-        public String getMessage() { return message; }
     }
 
 }

@@ -44,10 +44,10 @@ public class Hearing {
     /**
      * Start and end time for this hearing on that date.
      */
-    @Column(nullable = false)
+    @Column(nullable = true)
     private LocalDateTime startTime;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private LocalDateTime endTime;
 
     @Column
