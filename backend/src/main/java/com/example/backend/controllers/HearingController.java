@@ -32,6 +32,7 @@ public class HearingController {
     }
 
     // This endpoint also needs its own path
+    //want to ensure if this works
     @PostMapping("/for-case/{caseId}")
     @PreAuthorize("hasAnyRole('LAWYER', 'JUNIOR')")
     public ResponseEntity<HearingDTO> createHearing(@PathVariable UUID caseId, @RequestBody CreateHearingDto createDto) {
