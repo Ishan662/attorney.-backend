@@ -2,6 +2,7 @@ package com.example.backend.service;
 
 import java.util.List;
 
+    //initializing gettters and setters
 public class GoogleDistanceMatrixResponse {
     private String status;
     private List<Row> rows;
