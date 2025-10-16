@@ -67,7 +67,7 @@ public class CaseService {
 
     @Transactional
     public UUID createCase(CreateCaseRequest request) {
-        // print coming request details
+        // print incoming request details
         System.out.println("Court Type:" + request.getCourtType());
 
         // 1. Get the authenticated lawyer creating the case.
