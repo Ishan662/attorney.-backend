@@ -17,28 +17,28 @@ public class Hearing {
     private UUID id;
 
     // Link to Case entity
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "case_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @JoinColumn(name = "case_id", nullable = true)
     private Case aCase;
 
     // User who created this hearing
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "created_by_user_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @JoinColumn(name = "created_by_user_id", nullable = true)
     private User createdByUser;
 
     // Lawyer assigned to this hearing
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "lawyer_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @JoinColumn(name = "lawyer_id", nullable = true)
     private User lawyer;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String title;
 
     /**
      * The general hearing date (e.g., "2025-09-08").
      * Useful for filtering by day.
      */
-    @Column(nullable = false)
+    @Column(nullable = true)
     private Instant hearingDate;
 
     /**
