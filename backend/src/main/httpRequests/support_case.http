@@ -1,0 +1,128 @@
+### =================================================================
+### Support Case Feature - Test File
+### =================================================================
+
+
+@auth_token = Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6ImUzZWU3ZTAyOGUzODg1YTM0NWNlMDcwNTVmODQ2ODYyMjU1YTcwNDYiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vYXR0b3JuZXktNDU4NjIiLCJhdWQiOiJhdHRvcm5leS00NTg2MiIsImF1dGhfdGltZSI6MTc1Nzc2MTUxNSwidXNlcl9pZCI6IlQwVjF5RjV2UUFoTDVlWmt0OTNGVFdCYjlwTjIiLCJzdWIiOiJUMFYxeUY1dlFBaEw1ZVprdDkzRlRXQmI5cE4yIiwiaWF0IjoxNzU3NzYxNTE1LCJleHAiOjE3NTc3NjUxMTUsImVtYWlsIjoiZGFyc2hhbmEyMDIxc3VqYW5AZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImZpcmViYXNlIjp7ImlkZW50aXRpZXMiOnsiZW1haWwiOlsiZGFyc2hhbmEyMDIxc3VqYW5AZ21haWwuY29tIl19LCJzaWduX2luX3Byb3ZpZGVyIjoicGFzc3dvcmQifX0.RWbYBtKNgZAcu7ii5cm-p_iWlwrEAHnjlXIg2WwWL0G6mHLjllxZeIbM1vD7qEuSZdTfwEqAe4TY_N4ODT991FxK5sFofLoKXs1UPl5g5kZExya3EVFtMQxazmozgWA5s3W91jVMXFgEvUrDFagu3NrxXRKOPnQVgEvhyveKIgZnhFOESkPf6jzfmn-x1V_-lMFqGD-ozM6yt0DFK8xcLrQkSeqtwvIz8Wj6_zyTgJgy3cacJ4oN_wGMxMCcQkKa-zXiYe-0ysAfVkQma4cI49HhGwUqEhywPSRBwhGhAzGjavupwEaCw5qPVBjyg5Qh99yN3rnbMxe7sn6jpgbVuw
+
+### File-level variables
+@lawyer_token = {{auth_token}}
+@admin_token = {{auth_token}}
+@api_base = http://localhost:8080/api
+
+### =================================================================
+### 1. User (Lawyer) Creates a New Support Case
+### =================================================================
+# This simulates a lawyer submitting the "New Question" form.
+# It should succeed if the token is from a valid user.
+POST {{api_base}}/support/cases
+Content-Type: application/json
+Authorization: {{lawyer_token}}
+
+{
+  "subject": "Question about case filtering",
+  "firstMessage": "Hello, I am having trouble filtering my cases by date. The start date filter does not seem to be working. Can you please advise?"
+}
+
+### To use in subsequent requests, you can capture the ID
+@new_case_id = {{CREATE_NEW_CASE.response.body.$.id}}
+
+### =================================================================
+### 2. User (Lawyer) Views Their Own Support Cases
+### =================================================================
+# This should return a list of all cases created by this specific user.
+GET {{api_base}}/support/cases/my-cases
+Authorization: {{lawyer_token}}
+
+### =================================================================
+### 3. User (Lawyer) Views a Specific Case They Own
+### =================================================================
+# This should succeed. It uses the ID captured from the creation request.
+GET {{api_base}}/support/cases/{{new_case_id}}
+Authorization: {{lawyer_token}}
+
+### =================================================================
+### 4. Admin Views All OPEN Support Cases
+### =================================================================
+# This simulates the admin's main work queue.
+# It should only succeed if the token is from an ADMIN user.
+GET {{api_base}}/admin/support/tickets?status=OPEN
+Authorization: {{admin_token}}
+
+### =================================================================
+### 5. Admin Answers the User's Case
+### =================================================================
+# The admin replies to the case created in Step 1.
+# The backend should update the case status to ANSWERED.
+POST {{api_base}}/admin/support/tickets/9d5bbbb9-203f-49f4-9912-0d18e0784a51/answer
+Content-Type: application/json
+Authorization: {{admin_token}}
+
+{
+  "messageBody": "Thank you for reaching out. We are looking into the date filtering issue."
+}
+
+### =================================================================
+### 6. User (Lawyer) Adds a Follow-up Reply
+### =================================================================
+# The user sees the admin's reply and adds another message.
+# The backend should update the case status to PENDING_ADMIN_REPLY.
+POST {{api_base}}/support/cases/9d5bbbb9-203f-49f4-9912-0d18e0784a51/messages
+Content-Type: application/json
+Authorization: {{lawyer_token}}
+
+{
+  "messageBody": "Thank you for the quick response! I appreciate the update."
+}
+
+### =================================================================
+### 9. User (Lawyer) Closes Their Own Case
+### =================================================================
+# This simulates the user clicking "Mark as Resolved" after their
+# issue has been addressed.
+# The backend service MUST verify that the user making this request
+# is the original creator of the ticket.
+# Endpoint: PUT /api/support/cases/{id}/close (from SupportCaseController)
+PUT {{api_base}}/support/cases/a7bdda8f-fcb3-441f-a195-05c687d552e0/close
+Authorization: {{lawyer_token}}
+
+### Expected Response:
+# HTTP/1.1 204 No Content
+# (A successful PUT/DELETE with no response body should return 204)
+
+
+### =================================================================
+### 10. Admin Closes a User's Case
+### =================================================================
+# This simulates an admin closing a case, perhaps for housekeeping
+# after it has been answered for a long time.
+# This requires an ADMIN token.
+#
+# NOTE: To test this properly, you would need to create a NEW case first
+#       and capture its ID, because the case from step 1 was already closed in step 9.
+#       For demonstration, we will reuse the same ID.
+#
+# Endpoint: PUT /api/admin/support/tickets/{id}/close (from the new AdminSupportCaseController)
+GET {{api_base}}/admin/support/tickets/4b7d7933-9f8b-4e64-85ee-6c0c3dee861e
+Authorization: {{admin_token}}
+
+### Expected Response:
+# HTTP/1.1 204 No Content
+
+
+### =================================================================
+### 11. Failure Test: User Tries to Close a Case They Don't Own
+### =================================================================
+# !! IMPORTANT !!
+# To run this test, you would need:
+# 1. A token from a DIFFERENT lawyer (@another_lawyer_token).
+# 2. The ID of a case created by the FIRST lawyer ({{new_case_id}}).
+#
+# This request is EXPECTED TO FAIL with a 403 Forbidden because the
+# service layer's security check will find that the user ID does not match
+# the ticket's created_by_user_id.
+PUT {{api_base}}/support/cases/a7bdda8f-fcb3-441f-a195-05c687d552e0/close
+Authorization: {{another_lawyer_token}}
+
+### Expected Response:
+# HTTP/1.1 403 Forbidden
