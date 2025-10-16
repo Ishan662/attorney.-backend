@@ -11,6 +11,7 @@ import com.example.backend.model.invitations.Invitation;
 import com.example.backend.model.invitations.InvitationStatus;
 import com.example.backend.model.user.User;
 import com.example.backend.repositories.*;
+import com.example.backend.service.FirebaseChat.FirebaseChatService;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseToken;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +31,7 @@ public class InvitationService {
     @Autowired private CaseRepository caseRepository; // Needed to validate case context
     @Autowired private CaseMemberRepository caseMemberRepository; // Needed to add clients to cases
     @Autowired private EmailService emailService;
+    @Autowired private FirebaseChatService firebaseChatService;
 
     @Transactional
     public void createAndSendInvitation(InviteUserRequest inviteRequest) {
@@ -46,6 +48,20 @@ public class InvitationService {
             throw new IllegalArgumentException("Cannot invite users with this role.");
         }
 
+        // 3. Pre-provision a placeholder user. THIS STEP IS COMMON FOR ALL ROLES and must happen first.
+        User placeholderUser = userRepository.findByEmail(inviteRequest.getEmail())
+                .orElseGet(() -> {
+                    User newUser = new User();
+                    newUser.setEmail(inviteRequest.getEmail());
+                    newUser.setFirm(invitingLawyer.getFirm());
+                    newUser.setRole(inviteRequest.getRole());
+                    parseAndSetFullName(newUser, inviteRequest.getFullName());
+                    newUser.setStatus(UserStatus.PENDING_INVITATION);
+                    newUser.setPhoneNumber(inviteRequest.getPhoneNumber());
+                    return userRepository.save(newUser);
+                });
+
+        // 4. If the invite is for a client, handle all case-related logic in one clean block.
         if (inviteRequest.getRole() == AppRole.CLIENT) {
             if (inviteRequest.getCaseId() == null) {
                 throw new IllegalArgumentException("Case ID is required when inviting a client.");
@@ -56,27 +72,17 @@ public class InvitationService {
                     .filter(c -> c.getFirm().getId().equals(invitingLawyer.getFirm().getId()))
                     .orElseThrow(() -> new IllegalArgumentException("Case not found or you do not have permission."));
 
-            // 2. Update the case with the new client information from the form.
+            // Action 1: Update the case details
+            // Update the case with the new client information from the form.
             targetCase.setClientName(inviteRequest.getFullName());
             targetCase.setClientEmail(inviteRequest.getEmail());
             targetCase.setClientPhone(inviteRequest.getPhoneNumber()); // Assuming DTO has this
-
-            // 3. Save the updated case details.
             caseRepository.save(targetCase);
-        }
 
-        // 3. Pre-provision a placeholder user if they don't exist
-        User placeholderUser = userRepository.findByEmail(inviteRequest.getEmail())
-                .orElseGet(() -> {
-                    User newUser = new User();
-                    newUser.setEmail(inviteRequest.getEmail());
-                    newUser.setFirm(invitingLawyer.getFirm());
-                    newUser.setRole(inviteRequest.getRole());
-                    parseAndSetFullName(newUser, inviteRequest.getFullName()); // set the full name with the help of a helper function
-                    newUser.setStatus(UserStatus.PENDING_INVITATION);
-                    newUser.setPhoneNumber(inviteRequest.getPhoneNumber());
-                    return userRepository.save(newUser);
-                });
+            // Action 2: Add the newly created placeholder user to the case's chat channel
+            firebaseChatService.addUserToChannel(targetCase.getChatChannelId(), placeholderUser);
+
+        }
 
         // 4. Create the invitation record
         Invitation invitation = new Invitation();

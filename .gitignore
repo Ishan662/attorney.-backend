@@ -5,6 +5,6 @@
 *.ipr
 *.idea
 ../.idea/
-
+.vscode
 
 

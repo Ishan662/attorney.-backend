@@ -1,6 +1,7 @@
 package com.example.backend.repositories;
 
 import com.example.backend.model.cases.Case;
+import com.example.backend.model.cases.CaseStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -28,4 +29,49 @@ public interface CaseRepository extends JpaRepository<Case, UUID> {
     List<Case> findCasesByMemberUserId(@Param("userId") UUID userId);
 
     boolean existsByFirmIdAndCaseNumber(UUID firmId, String caseNumber);
+
+    /**
+     * Finds cases for a lawyer with dynamic filtering.
+     * JPQL handles the null checks, making the query clean.
+     */
+    @Query("SELECT c FROM Case c WHERE c.firm.id = :firmId " +
+            "AND (LOWER(c.caseTitle) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
+            "     LOWER(c.caseNumber) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
+            "     :searchTerm IS NULL OR :searchTerm = '') " +
+            "AND (:caseType IS NULL OR c.caseType = :caseType) " +
+            "AND (:court IS NULL OR c.courtName = :court) " +
+            "AND (:status IS NULL OR c.status = :status) " +
+            "ORDER BY c.createdAt DESC")
+    List<Case> findCasesForLawyerWithFilters(
+            @Param("firmId") UUID firmId,
+            @Param("searchTerm") String searchTerm,
+            @Param("caseType") String caseType,
+            @Param("court") String court,
+            @Param("status") CaseStatus status
+            // Note: Date filtering in JPQL is more complex, let's add it later if needed.
+    );
+
+
+    /**
+     * Finds cases for a junior/client with dynamic filtering.
+     * The only difference is the added JOIN to case_members.
+     */
+    @Query("SELECT c FROM Case c JOIN c.members m WHERE m.user.id = :userId " +
+            "AND (LOWER(c.caseTitle) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
+            "     LOWER(c.caseNumber) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
+            "     :searchTerm IS NULL OR :searchTerm = '') " +
+            "AND (:caseType IS NULL OR c.caseType = :caseType) " +
+            "AND (:court IS NULL OR c.courtName = :court) " +
+            "AND (:status IS NULL OR c.status = :status) " +
+            "ORDER BY c.createdAt DESC")
+    List<Case> findCasesForMemberWithFilters(
+            @Param("userId") UUID userId,
+            @Param("searchTerm") String searchTerm,
+            @Param("caseType") String caseType,
+            @Param("court") String court,
+            @Param("status") CaseStatus status
+    );
+
+    @Query("SELECT c FROM Case c JOIN c.members m WHERE m.user.id = :userId")
+    List<Case> findCasesByUserId(@Param("userId") UUID userId);
 }

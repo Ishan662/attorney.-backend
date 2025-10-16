@@ -1,0 +1,20 @@
+### GET request to example server
+@auth_token = Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IjJiN2JhZmIyZjEwY2FlMmIxZjA3ZjM4MTZjNTQyMmJlY2NhNWMyMjMiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vYXR0b3JuZXktNDU4NjIiLCJhdWQiOiJhdHRvcm5leS00NTg2MiIsImF1dGhfdGltZSI6MTc1NTA4NjI3OSwidXNlcl9pZCI6Iml6V1JaREJQTTVjdmtUM29rRlRqMWJxUlM0ODMiLCJzdWIiOiJpeldSWkRCUE01Y3ZrVDNva0ZUajFicVJTNDgzIiwiaWF0IjoxNzU1MDg2Mjc5LCJleHAiOjE3NTUwODk4NzksImVtYWlsIjoiamVld2FudGhhZGVoZXJhdGgwNEBnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiZmlyZWJhc2UiOnsiaWRlbnRpdGllcyI6eyJlbWFpbCI6WyJqZWV3YW50aGFkZWhlcmF0aDA0QGdtYWlsLmNvbSJdfSwic2lnbl9pbl9wcm92aWRlciI6InBhc3N3b3JkIn19.Ut3XQEUmmbLfkkJGoWBGB0H9BjcFiWvRuVaeVqYVwpujW6FbrzAvM_vpBTD7DreAwlBYiFGB5K-jvLfU3gKMzL0ulPnZeN22w9wTwC9LZbKp9nP2f-tMi0pLWrlo2TmvilC31_cpUKG8itjdge3HcdXm8NPDj2_S73lEjH7H8HcriQWBp09SBEBxSWIa32b4QiItvkY6Tb1voqUdJuQPa1DPGGykk4p4ZU9MTtstTBtJrDNUySis4U5soHvRluydPUYbKvKAF85aDaZiQh9PQHBzgsJx7QBwxFE_MAdtoGOxT83TJr_iHxRqM39soulCrRd4xaDXC3rrelMAadPcFg
+
+PUT http://localhost:8080/api/lawyers/court-colors
+Content-Type: application/json
+Authorization: {{auth_token}}
+
+{
+  "userId": "284f77f9-e5df-49c4-a3ea-914e1030eea6",
+  "courtColors": {
+    "Supreme Court": "#FF0000",
+    "District Court": "#00FF00",
+    "High Court": "#0000FF",
+    "Family Court": "#FFFF00"
+  }
+}
+
+
+
+###

@@ -1,4 +1,3 @@
-// >> In a new file: model/SubscriptionPlan.java
 package com.example.backend.model.subcription;
 
 import io.hypersistence.utils.hibernate.type.json.JsonType;

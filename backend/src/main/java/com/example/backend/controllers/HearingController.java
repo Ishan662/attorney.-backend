@@ -1,4 +1,3 @@
-// >> In your existing file: controllers/HearingController.java
 package com.example.backend.controllers;
 
 import com.example.backend.dto.hearingDTOS.CreateHearingDto;
