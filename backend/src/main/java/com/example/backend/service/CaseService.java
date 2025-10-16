@@ -7,6 +7,8 @@ import com.example.backend.dto.caseDTOS.CreateCaseRequest;
 
 // Mapper and Model classes
 import com.example.backend.dto.caseDTOS.UpdateCaseRequest;
+import com.example.backend.dto.chatDTOS.ChatChannelDTO;
+import com.example.backend.dto.chatDTOS.MemberDTO;
 import com.example.backend.mapper.CaseDetailMapper;
 import com.example.backend.mapper.CaseMapper;
 import com.example.backend.model.AppRole;
@@ -24,6 +26,7 @@ import com.example.backend.repositories.HearingRepository;
 import com.example.backend.repositories.CaseMemberRepository;
 
 // Other imports...
+import com.example.backend.service.FirebaseChat.FirebaseChatService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.AccessDeniedException;
@@ -33,6 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.logging.Level;
@@ -47,21 +51,23 @@ public class CaseService {
     private final HearingRepository hearingRepository;
     private final CaseMemberRepository caseMemberRepository;
     private final CaseDetailMapper caseDetailMapper;
+    private final FirebaseChatService firebaseChatService;
 
     @Autowired
     public CaseService(CaseRepository caseRepository, UserRepository userRepository, CaseMapper caseMapper,
-                       HearingRepository hearingRepository, CaseMemberRepository caseMemberRepository, CaseDetailMapper caseDetailMapper) {
+                       HearingRepository hearingRepository, CaseMemberRepository caseMemberRepository, CaseDetailMapper caseDetailMapper, FirebaseChatService firebaseChatService) {
         this.caseRepository = caseRepository;
         this.userRepository = userRepository;
         this.caseMapper = caseMapper;
         this.hearingRepository = hearingRepository;
         this.caseMemberRepository = caseMemberRepository;
         this.caseDetailMapper = caseDetailMapper;
+        this.firebaseChatService = firebaseChatService;
     }
 
     @Transactional
     public UUID createCase(CreateCaseRequest request) {
-        // print comming request details
+        // print incoming request details
         System.out.println("Court Type:" + request.getCourtType());
 
         // 1. Get the authenticated lawyer creating the case.
@@ -116,8 +122,16 @@ public class CaseService {
             initialHearing.setCreatedByUser(lawyer);
             initialHearing.setTitle("Initial Hearing");
             initialHearing.setLocation(request.getCourt());
+            initialHearing.setLawyer(lawyer);
             hearingRepository.save(initialHearing);
         }
+
+        // ==========================================================
+        //  START: NEW FIREBASE CHAT INTEGRATION LOGIC
+        // ==========================================================
+
+        List<User> chatMembers = new ArrayList<>();
+        chatMembers.add(lawyer); // Add the lawyer creating the case
 
         // 4. IMPORTANT: NO client user is created here. The invitation flow is now separate.
 
@@ -130,10 +144,22 @@ public class CaseService {
                 throw new SecurityException("Cannot assign a junior from another firm.");
             }
             caseMemberRepository.save(new CaseMember(savedCase, juniorUser));
+            chatMembers.add(juniorUser); // Also add the junior to the chat members list
         }
 
         // 6. The lawyer who creates the case is automatically a member so they can see it in their "My Cases" view.
         caseMemberRepository.save(new CaseMember(savedCase, lawyer));
+
+        // Only search for the client by email. If they already exist, add them.
+        userRepository.findByEmail(request.getClientEmail())
+                .ifPresent(chatMembers::add);
+
+        // Create the channel with whomever is currently available
+        String channelId = firebaseChatService.createCaseChannel(savedCase.getId(), savedCase.getCaseTitle(), chatMembers);
+        if (channelId != null) {
+            savedCase.setChatChannelId(channelId);
+            caseRepository.save(savedCase);
+        }
 
         return savedCase.getId();
     }
@@ -292,5 +318,29 @@ public class CaseService {
         String firebaseUid = SecurityContextHolder.getContext().getAuthentication().getName();
         return userRepository.findByFirebaseUid(firebaseUid)
                 .orElseThrow(() -> new RuntimeException("Authenticated user not found in database."));
+    }
+
+    public List<ChatChannelDTO> getChatChannelsForCurrentUser() {
+        User currentUser = getCurrentUser();
+        List<Case> cases = caseRepository.findCasesByUserId(currentUser.getId());
+
+        return cases.stream().map(aCase -> {
+            ChatChannelDTO channelDTO = new ChatChannelDTO();
+            channelDTO.setCaseId(aCase.getId());
+            channelDTO.setChatChannelId(aCase.getChatChannelId());
+            channelDTO.setCaseTitle(aCase.getCaseTitle());
+
+            List<MemberDTO> memberDTOs = aCase.getMembers().stream().map(member -> {
+                MemberDTO memberDTO = new MemberDTO();
+                User memberUser = member.getUser();
+                memberDTO.setUserId(memberUser.getId());
+                memberDTO.setName(memberUser.getFirstName() + " " + memberUser.getLastName());
+                memberDTO.setRole(memberUser.getRole());
+                return memberDTO;
+            }).collect(Collectors.toList());
+
+            channelDTO.setMembers(memberDTOs);
+            return channelDTO;
+        }).collect(Collectors.toList());
     }
 }

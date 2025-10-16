@@ -6,6 +6,7 @@ import com.example.backend.dto.caseDTOS.CaseResponseDTO;
 // --- ▲▲▲ IMPORT THE NEW, SPECIFIC DTOS ▲▲▲ ---
 
 import com.example.backend.dto.caseDTOS.UpdateCaseRequest;
+import com.example.backend.dto.chatDTOS.ChatChannelDTO;
 import com.example.backend.service.CaseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -96,6 +97,18 @@ public class CaseController {
     ){
         List<CaseResponseDTO> cases = caseService.findCasesForCurrentUser(searchTerm, caseType, status, court, startDate, endDate);
         return ResponseEntity.ok(cases);
+    }
+
+    /**
+     * Fetches all chat channels that the currently authenticated user is a member of.
+     *
+     * @return A list of ChatChannelDTO objects.
+     */
+    @GetMapping("/my-chats")
+    @PreAuthorize("isAuthenticated()") // Any authenticated user (Lawyer, Junior, Client) can see their own chats
+    public ResponseEntity<List<ChatChannelDTO>> getMyChatChannels() {
+        List<ChatChannelDTO> chatChannels = caseService.getChatChannelsForCurrentUser();
+        return ResponseEntity.ok(chatChannels);
     }
 
 }
