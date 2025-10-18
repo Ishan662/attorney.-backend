@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/tasks")
+@RequestMapping("/api/calendar/tasks")
 public class CalendarTasksController {
 
     private final CalendarTaskService calendarTaskService;

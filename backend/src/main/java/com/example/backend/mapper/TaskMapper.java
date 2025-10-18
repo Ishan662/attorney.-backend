@@ -4,23 +4,22 @@ import com.example.backend.dto.taskDTOS.TaskResponseDTO;
 import com.example.backend.model.tasks.Task;
 import org.springframework.stereotype.Component;
 
-@Component // Make this a Spring-managed bean for dependency injection
+@Component
 public class TaskMapper {
 
     public TaskResponseDTO toDto(Task task) {
-        if(task == null) {
+        if (task == null) {
             return null;
         }
 
-        TaskResponseDTO dto = TaskResponseDTO.builder()
-                .id(task.getId())
-                .title(task.getTitle())
-                .description(task.getDescription())
-                .assignedByUser(task.getAssignedByUser() != null ? task.getAssignedByUser().getId() : null)
-                .assignedToUser(task.getAssignedToUser() != null ? task.getAssignedToUser().getId() : null)
-                .caseId(task.getCaseId())
-                .status(task.getStatus() != null ? task.getStatus().name() : null)
-                .build();
+        TaskResponseDTO dto = new TaskResponseDTO();
+        dto.setId(task.getId());
+        dto.setTitle(task.getTitle());
+        dto.setDescription(task.getDescription());
+        dto.setAssignedByUser(task.getAssignedByUser() != null ? task.getAssignedByUser().getId() : null);
+        dto.setAssignedToUser(task.getAssignedToUser() != null ? task.getAssignedToUser().getId() : null);
+        dto.setCaseId(task.getCaseId());
+        dto.setStatus(task.getStatus() != null ? task.getStatus().name() : null);
 
         return dto;
     }
