@@ -39,6 +39,19 @@ public class LawyerController {
         return ResponseEntity.ok(lawyerProfile);
     }
 
+    @GetMapping("/court-colors")
+    @PreAuthorize("hasRole('LAWYER')")
+    public ResponseEntity<Map<String, String>> getMyCourtColors() {
+
+        User currentUser = getCurrentUser();
+        UUID currentUserId = currentUser.getId();
+
+        Map<String, String> courtColors = lawyerService.getCourtColors(currentUserId);
+
+        return ResponseEntity.ok(courtColors);
+    }
+
+
     @PutMapping("/court-colors") //
     @PreAuthorize("hasRole('LAWYER')")
     public ResponseEntity<LawyerProfileDTO> updateMyCourtColors(@RequestBody CourtColorsRequest courtColorsRequest) {
@@ -48,7 +61,7 @@ public class LawyerController {
 
         Map<String, String> newColors = courtColorsRequest.getCourtColors();
 
-        LawyerProfileDTO updatedProfile = lawyerService.updateCourtColors(currentUserId, newColors);
+        LawyerProfileDTO updatedProfile = lawyerService.updateOrCreateCourtColors(currentUserId, newColors);
         return ResponseEntity.ok(updatedProfile);
     }
 
@@ -65,4 +78,6 @@ public class LawyerController {
         return this.userRepository.findByFirebaseUid(firebaseUid)
                 .orElseThrow(() -> new RuntimeException("Authenticated user not found in database. This should not happen if the token filter is working correctly."));
     }
+
+
 }
