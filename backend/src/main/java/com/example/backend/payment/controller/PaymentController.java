@@ -3,36 +3,41 @@ package com.example.backend.payment.controller;
 import com.example.backend.payment.dto.PaymentRequestDto;
 import com.example.backend.payment.dto.PaymentResponseDto;
 import com.example.backend.payment.service.PaymentService;
-import lombok.RequiredArgsConstructor;
+import com.stripe.exception.StripeException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/payments")
-@RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:5173") // adjust if needed
 public class PaymentController {
 
     private final PaymentService paymentService;
+    private static final Logger logger = LoggerFactory.getLogger(PaymentController.class);
 
-    @PostMapping("/initiate")
-    public PaymentResponseDto initiatePayment(@RequestBody PaymentRequestDto dto) {
-        return paymentService.initiatePayment(dto);
+    @Autowired
+    public PaymentController(PaymentService paymentService) {
+        this.paymentService = paymentService;
     }
 
-    /**
-     * Webhook endpoint for PayHere to call after payment
-     */
-    @PostMapping("/payhere/webhook")
-    public String handleWebhook(
-            @RequestParam("merchant_id") String merchantId,
-            @RequestParam("order_id") String orderId,
-            @RequestParam("payhere_amount") double amount,
-            @RequestParam("payhere_currency") String currency,
-            @RequestParam("status_code") int statusCode,
-            @RequestParam("md5sig") String md5sig
-    ) {
-        boolean verified = paymentService.handlePaymentNotification(
-                merchantId, orderId, amount, currency, statusCode, md5sig
-        );
-        return verified ? "OK" : "FAIL";
+    @PostMapping("/initiate")
+    public ResponseEntity<?> initiatePayment(@RequestBody PaymentRequestDto request) {
+        try {
+            PaymentResponseDto response = paymentService.createCheckoutSession(request);
+            return ResponseEntity.ok(response);
+        } catch (StripeException e) {
+            logger.error("Stripe API error during payment initiation: {}", e.getMessage());
+            return ResponseEntity
+                    .status(e.getStatusCode())
+                    .body(e.getMessage());
+        } catch (Exception e) {
+            logger.error("Unexpected error during payment initiation for user {}", request.getCustomerEmail(), e);
+            return ResponseEntity
+                    .internalServerError()
+                    .body("An unexpected error occurred. Please try again later.");
+        }
     }
 }

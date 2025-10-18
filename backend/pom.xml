@@ -122,7 +122,15 @@
 			<version>2.21.1</version>
 		</dependency>
 
-	</dependencies>
+        <!-- Stripe SDK -->
+        <dependency>
+            <groupId>com.stripe</groupId>
+            <artifactId>stripe-java</artifactId>
+            <version>24.8.0</version>
+        </dependency>
+
+
+    </dependencies>
 
 	<build>
 		<plugins>

@@ -51,7 +51,8 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/auth/register-lawyer",
                                 "/api/invitations/finalize",
-                                "/api/invitations/details"
+                                "/api/invitations/details",
+                                "/api/payments/payhere/webhook"
                         ).permitAll()
                         .requestMatchers(
                                 "/api/auth/status",

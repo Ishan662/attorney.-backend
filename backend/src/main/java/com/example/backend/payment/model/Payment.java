@@ -1,68 +1,68 @@
 package com.example.backend.payment.model;
 
 import jakarta.persistence.*;
-import lombok.*;
-
+import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
 
-/**
- * Represents a payment record in the system.
- * This entity is reusable across multiple modules (subscriptions, case payments, etc.).
- */
 @Entity
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Table(name = "payments")
+@Table(name = "payments") // Changed table name to avoid SQL keyword conflict
 public class Payment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String orderId; // unique identifier for PayHere transaction
-    private String payerEmail;
-    private double amount;
+    private String sessionId;
+    private String customerEmail;
+    private Long amount; // Stored in smallest currency unit (e.g., cents)
     private String currency;
+    private String description;
 
-    @Column(length = 20)
-    private String status; // PENDING, SUCCESS, FAILED
+    @Enumerated(EnumType.STRING)
+    private PaymentStatus status;
 
-    private String referenceType; // which module: "CASE_PAYMENT", "SUBSCRIPTION"
-    private String referenceId;   // the entity id from that module
+    @CreationTimestamp
+    @Column(updatable = false)
+    private LocalDateTime createdAt;
 
-    private LocalDateTime createdAt = LocalDateTime.now();
+    // Constructors
+    public Payment() {}
 
+    public Payment(String sessionId, String customerEmail, Long amount, String currency, PaymentStatus status, String description) {
+        this.sessionId = sessionId;
+        this.customerEmail = customerEmail;
+        this.amount = amount;
+        this.currency = currency;
+        this.status = status;
+        this.description = description;
+    }
+
+    // Getters & Setters
     public Long getId() {
         return id;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public String getSessionId() {
+        return sessionId;
     }
 
-    public String getOrderId() {
-        return orderId;
+    public void setSessionId(String sessionId) {
+        this.sessionId = sessionId;
     }
 
-    public void setOrderId(String orderId) {
-        this.orderId = orderId;
+    public String getCustomerEmail() {
+        return customerEmail;
     }
 
-    public String getPayerEmail() {
-        return payerEmail;
+    public void setCustomerEmail(String customerEmail) {
+        this.customerEmail = customerEmail;
     }
 
-    public void setPayerEmail(String payerEmail) {
-        this.payerEmail = payerEmail;
-    }
-
-    public double getAmount() {
+    public Long getAmount() {
         return amount;
     }
 
-    public void setAmount(double amount) {
+    public void setAmount(Long amount) {
         this.amount = amount;
     }
 
@@ -74,35 +74,23 @@ public class Payment {
         this.currency = currency;
     }
 
-    public String getStatus() {
+    public PaymentStatus getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(PaymentStatus status) {
         this.status = status;
     }
 
-    public String getReferenceType() {
-        return referenceType;
+    public String getDescription() {
+        return description;
     }
 
-    public void setReferenceType(String referenceType) {
-        this.referenceType = referenceType;
-    }
-
-    public String getReferenceId() {
-        return referenceId;
-    }
-
-    public void setReferenceId(String referenceId) {
-        this.referenceId = referenceId;
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
     }
 }
