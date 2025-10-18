@@ -41,6 +41,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import java.time.ZoneOffset;
+import java.time.Instant;
 
 @Service
 public class CaseService {
@@ -315,6 +317,7 @@ public class CaseService {
                 .map(caseMapper::toResponseDto)
                 .collect(Collectors.toList());
     }
+
 
     private User getCurrentUser() {
         String firebaseUid = SecurityContextHolder.getContext().getAuthentication().getName();
