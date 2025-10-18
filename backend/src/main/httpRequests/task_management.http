@@ -1,0 +1,233 @@
+### =================================================================
+### Task Management - Test File
+### =================================================================
+
+### File-level variables for authentication tokens.
+### !! IMPORTANT !!
+### Replace these placeholders with REAL, valid Firebase ID Tokens.
+### Get one token from a logged-in LAWYER user.
+### Get another token from a logged-in JUNIOR user *who belongs to that lawyer's firm*.
+@lawyer_token = Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IjlkMjEzMGZlZjAyNTg3ZmQ4ODYxODg2OTgyMjczNGVmNzZhMTExNjUiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vYXR0b3JuZXktNDU4NjIiLCJhdWQiOiJhdHRvcm5leS00NTg2MiIsImF1dGhfdGltZSI6MTc2MDc4OTI1MSwidXNlcl9pZCI6IlQwVjF5RjV2UUFoTDVlWmt0OTNGVFdCYjlwTjIiLCJzdWIiOiJUMFYxeUY1dlFBaEw1ZVprdDkzRlRXQmI5cE4yIiwiaWF0IjoxNzYwNzg5MjUxLCJleHAiOjE3NjA3OTI4NTEsImVtYWlsIjoiZGFyc2hhbmEyMDIxc3VqYW5AZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImZpcmViYXNlIjp7ImlkZW50aXRpZXMiOnsiZW1haWwiOlsiZGFyc2hhbmEyMDIxc3VqYW5AZ21haWwuY29tIl19LCJzaWduX2luX3Byb3ZpZGVyIjoicGFzc3dvcmQifX0.Slxa9kzkZ4rsjFlXUFBCA1XyrZcxFb5a1qFrXDyCKueLtSa3UeBg5NC2ge11qztKJMqOhSme1MQh20hkvUdD8Kq1FIwWMkfhr002otv1Sc_qqkoMc7IeGYdcr-H8EiBMEJjcwVFHqdWJ9A-DAW-W-YBnm9Aew9NJRYHGelX7VAPaJcDMVNW6OfsJ5i92v9OO0wlEB_sLYJYqR4qvtoDYe48G_IUUkXySxn__LyisXYu5xWMOu-QZdhpONWn6Qjs8Ci3rsMJtl7tvG4xU5r7Qb9kbo4KSgfVO6DNDurHyC9LnRSnkYSQpbJf1MP1BapP798jjYCNnVy7SAyCtKfbwkw
+
+@junior_token = Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6ImE1YTAwNWU5N2NiMWU0MjczMDBlNTJjZGQ1MGYwYjM2Y2Q4MDYyOWIiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vYXR0b3JuZXktNDU4NjIiLCJhdWQiOiJhdHRvcm5leS00NTg2MiIsImF1dGhfdGltZSI6MTc2MDc4ODQyNCwidXNlcl9pZCI6Imp0elRjZlp2OWpWSHFSY2UwZVRENmMyMDM2MjMiLCJzdWIiOiJqdHpUY2ZadjlqVkhxUmNlMGVURDZjMjAzNjIzIiwiaWF0IjoxNzYwNzg4NDI0LCJleHAiOjE3NjA3OTIwMjQsImVtYWlsIjoiaGV6ZWxyb2JlcnR6b24yMUBnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsImZpcmViYXNlIjp7ImlkZW50aXRpZXMiOnsiZW1haWwiOlsiaGV6ZWxyb2JlcnR6b24yMUBnbWFpbC5jb20iXX0sInNpZ25faW5fcHJvdmlkZXIiOiJwYXNzd29yZCJ9fQ.b4Aou42FrUoLOP0fBV2Pp5bCe3_sDFrvwQMV1zbBfVNY1M4VlNJUBcbwGDNLc9odSJwmXQTuyzLaMqZu6bDl0e-gpzjWE8BGuQhRyyHNcdZa-jNk3eDgKo5jysZOGQ6Ra49AfqWlXsuoyEkjG5iaS7Ejz22IWSp8jvglt0866wx76mwU_aMYkIg_eyqlh8ElaghevHGd3UtLJLWeMbAsnlVEGJmzDk7bwoJz9dmVNXFoAF66NU0pomSWqWODev76UGUSMVxVt-i4wqQwXg_y9yEcZN63gvbpU_pvb6qDk-Js7uuLlL4KOIEGJShYRYuoxnwYXvxQ5VqL4u_boiRq7g
+
+
+### File-level variables to hold IDs that we get from the API.
+### These will be set automatically by the requests below.
+@firm_junior_id = a0147adc-330d-450b-92ef-486ac38e9583
+@created_task_id = 5c7822dc-98da-48b8-9589-2294ee89afdd
+
+
+### =================================================================
+### 1. AS LAWYER: Get a List of Juniors to Assign Tasks To
+### =================================================================
+# This is the first step. The Lawyer needs to know the UUID of the junior
+# they want to assign a task to.
+# This should return a list of users with the "JUNIOR" role in the Lawyer's firm.
+# >> ACTION: Manually copy the "id" of one of the juniors from the response body
+# >>         and paste it into the @firm_junior_id variable above.
+# This request will FAIL with a 403 Forbidden if a JUNIOR tries to call it.
+
+# @name getJuniors
+GET http://localhost:8080/api/team/juniors
+Authorization: {{lawyer_token}}
+
+
+### =================================================================
+### 2. AS LAWYER: Create and Assign a New Task
+### =================================================================
+# This request creates a new task and assigns it to the junior whose ID you
+# copied into the @firm_junior_id variable.
+# The `caseId` can be any valid UUID for now, or null if you allow it.
+# This request will FAIL if a JUNIOR tries to call it.
+
+# @name createTask
+POST http://localhost:8080/api/tasks
+Content-Type: application/json
+Authorization: {{lawyer_token}}
+
+{
+  "title": "Review the Johnson Client Contract",
+  "description": "Please review clauses 4a and 5c for any potential liabilities. Upload the annotated document when complete.",
+  "type": "DOCUMENT_REVIEW",
+  "assignedToUserId": "{{firm_junior_id}}",
+  "caseId": "123e4567-e89b-12d3-a456-426614174000",
+  "dueDate": "2024-12-31T23:59:59.000Z"
+}
+
+
+### =================================================================
+### 3. Verify Task Creation & Set Task ID Variable
+### =================================================================
+# This script runs automatically after the "createTask" request succeeds.
+# It grabs the ID of the newly created task and stores it in the
+# @created_task_id variable for use in the update/delete requests.
+# You don't need to do anything here manually.
+> {%
+client.global.set("created_task_id", response.body.id);
+%}
+
+
+### =================================================================
+### 4. AS LAWYER: View All Tasks in the Firm
+### =================================================================
+# This request should return a list of ALL tasks for the Lawyer's entire firm.
+# You should see the task you just created in this list.
+
+GET http://localhost:8080/api/tasks
+Authorization: {{lawyer_token}}
+
+
+### =================================================================
+### 5. AS JUNIOR: View MY Assigned Tasks
+### =================================================================
+# Now we switch roles. Using the JUNIOR's token, this request should return
+# a list containing ONLY the tasks assigned to that specific junior.
+# You should see the "Review the Johnson Client Contract" task here.
+# The junior should NOT see tasks assigned to other juniors in the firm.
+
+GET http://localhost:8080/api/tasks
+Authorization: {{junior_token}}
+
+
+### =================================================================
+### 6. AS JUNIOR: Update the Task Status
+### =================================================================
+# The Junior is now marking the task as "IN_PROGRESS".
+# This uses the @created_task_id variable that was set automatically.
+# This request will FAIL with a 403 if the LAWYER tries to call it.
+
+PUT http://localhost:8080/api/tasks/{{created_task_id}}
+Content-Type: application/json
+Authorization: {{junior_token}}
+
+{
+  "status": "IN_PROGRESS"
+}
+
+
+### =================================================================
+### 7. AS LAWYER: Verify the Status Update
+### =================================================================
+# The Lawyer checks the task list again. The status for the Johnson contract
+# task should now show "IN_PROGRESS".
+
+GET http://localhost:8080/api/tasks
+Authorization: {{lawyer_token}}
+
+
+### =================================================================
+### 8. AS JUNIOR: Mark the Task as Complete
+### =================================================================
+# The Junior has finished their work and is now marking it as "COMPLETED".
+# After this, a document could be uploaded using the document endpoints.
+
+PUT http://localhost:8080/api/tasks/{{created_task_id}}
+Content-Type: application/json
+Authorization: {{junior_token}}
+
+{
+  "status": "COMPLETED"
+}
+
+### =================================================================
+### 9. AS LAWYER: Verify Final Status
+### =================================================================
+# The Lawyer checks one last time and sees the task is now "COMPLETED",
+# indicating the workflow is finished (pending document review).
+
+GET http://localhost:8080/api/tasks
+Authorization: {{lawyer_token}}
+
+### =================================================================
+### 10. Test Failure Case: Junior Tries to Create a Task
+### =================================================================
+# This request is EXPECTED TO FAIL with a 403 Forbidden status because
+# the POST /api/tasks endpoint is protected by @PreAuthorize("hasRole('LAWYER')").
+
+POST http://localhost:8080/api/tasks
+Content-Type: application/json
+Authorization: {{junior_token}}
+
+{
+  "title": "This should fail",
+  "description": "A junior cannot create tasks.",
+  "assignedToUserId": "{{firm_junior_id}}"
+}
+
+### =================================================================
+### Part 2: Document Management Workflow
+### =================================================================
+
+### File-level variable to hold the ID of a document after it's uploaded.
+@uploaded_document_id = 6fb6755b-e3c8-47ce-9059-1b0e27ea79fe
+
+
+### =================================================================
+### 11. AS JUNIOR: Upload a Document for the Completed Task
+### =================================================================
+# This is a multipart/form-data request, which is different from a JSON request.
+# The body is defined differently, using a boundary string.
+# The "<" symbol tells the client to read the content from the specified file path.
+#
+# >> ACTION <<
+#    1. Create a simple text file on your computer (e.g., on your Desktop).
+#    2. Update the file path below to point to YOUR local test file.
+#
+# This request uses the @created_task_id variable that was set when you ran Request #2.
+# It should succeed because the JUNIOR is the assignee of the task.
+
+# @name uploadDocument
+POST http://localhost:8080/api/documents/upload/task/{{created_task_id}}
+Authorization: {{junior_token}}
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="file"; filename="test_document.txt"
+
+< /home/nadexplorer/Desktop/Desktop_Backup/Attorny/Attorney.-Backend/backend/test_file/test.txt
+--boundary--
+
+
+### =================================================================
+### 12. Verify Document Upload & Set Document ID Variable
+### =================================================================
+# This script runs automatically after the "uploadDocument" request succeeds.
+# It grabs the ID of the newly uploaded document and stores it in the
+# @uploaded_document_id variable for the download test.
+> {%
+client.global.set("uploaded_document_id", response.body.documentId);
+%}
+
+
+### =================================================================
+### 13. AS LAWYER: List Documents for the Task
+### =================================================================
+# Before we can test the download, we need a way to see what documents are
+# attached to a task. This requires a NEW endpoint.
+# >> NOTE: You must add this endpoint to your backend for this test to work. <<
+# See the code below the test file.
+
+GET http://localhost:8080/api/tasks/{{created_task_id}}/documents
+Authorization: {{lawyer_token}}
+
+
+### =================================================================
+### 14. AS LAWYER: Download the Uploaded Document
+### =================================================================
+# This request uses the @uploaded_document_id variable.
+# It should succeed because the Lawyer is part of the same firm and is the
+# creator of the task.
+# In your REST client, this should trigger a "Save Response" dialog to download the file.
+
+GET http://localhost:8080/api/documents/{{uploaded_document_id}}/download
+Authorization: {{lawyer_token}}
+
+
+### =================================================================
+### 15. Test Failure Case: Junior from another firm tries to download
+### =================================================================
+# !! IMPORTANT !!
+# For this test, you would need a token from a junior who is NOT in the
+# lawyer's firm. This request is EXPECTED TO FAIL with a 403 Forbidden
+# because the security che
