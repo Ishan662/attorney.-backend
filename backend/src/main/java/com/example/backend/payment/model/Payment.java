@@ -1,16 +1,22 @@
 package com.example.backend.payment.model;
 
+import com.example.backend.model.cases.Case;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "payments") // Changed table name to avoid SQL keyword conflict
 public class Payment {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "case_id", nullable = false)
+    private Case caseEntity;
 
     private String sessionId;
     private String customerEmail;
@@ -28,7 +34,8 @@ public class Payment {
     // Constructors
     public Payment() {}
 
-    public Payment(String sessionId, String customerEmail, Long amount, String currency, PaymentStatus status, String description) {
+    public Payment(Case caseEntity, String sessionId, String customerEmail, Long amount, String currency, PaymentStatus status, String description) {
+        this.caseEntity = caseEntity;
         this.sessionId = sessionId;
         this.customerEmail = customerEmail;
         this.amount = amount;
@@ -37,8 +44,19 @@ public class Payment {
         this.description = description;
     }
 
+
     // Getters & Setters
-    public Long getId() {
+
+    public Case getCaseEntity() {
+        return caseEntity;
+    }
+
+    public void setCaseEntity(Case caseEntity) {
+        this.caseEntity = caseEntity;
+    }
+
+    // Getters & Setters
+    public UUID getId() {
         return id;
     }
 
