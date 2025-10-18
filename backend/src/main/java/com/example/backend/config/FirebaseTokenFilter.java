@@ -3,6 +3,7 @@ package com.example.backend.config;
 
 import com.example.backend.model.UserStatus;
 import com.example.backend.repositories.UserRepository; // Import UserRepository
+import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
@@ -28,7 +29,6 @@ import java.util.Optional;
 public class FirebaseTokenFilter extends OncePerRequestFilter {
 
     private final UserDetailsService userDetailsService;
-    // --- ▼▼▼ INJECT THE USER REPOSITORY DIRECTLY ▼▼▼ ---
     private final UserRepository userRepository;
 
     @Autowired

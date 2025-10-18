@@ -7,6 +7,8 @@ import com.example.backend.dto.caseDTOS.CreateCaseRequest;
 
 // Mapper and Model classes
 import com.example.backend.dto.caseDTOS.UpdateCaseRequest;
+import com.example.backend.dto.chatDTOS.ChatChannelDTO;
+import com.example.backend.dto.chatDTOS.MemberDTO;
 import com.example.backend.mapper.CaseDetailMapper;
 import com.example.backend.mapper.CaseMapper;
 import com.example.backend.model.AppRole;
@@ -24,17 +26,23 @@ import com.example.backend.repositories.HearingRepository;
 import com.example.backend.repositories.CaseMemberRepository;
 
 // Other imports...
+import com.example.backend.service.FirebaseChat.FirebaseChatService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import java.time.ZoneOffset;
+import java.time.Instant;
 
 @Service
 public class CaseService {
@@ -45,22 +53,24 @@ public class CaseService {
     private final HearingRepository hearingRepository;
     private final CaseMemberRepository caseMemberRepository;
     private final CaseDetailMapper caseDetailMapper;
+    private final FirebaseChatService firebaseChatService;
 
     @Autowired
     public CaseService(CaseRepository caseRepository, UserRepository userRepository, CaseMapper caseMapper,
-                       HearingRepository hearingRepository, CaseMemberRepository caseMemberRepository, CaseDetailMapper caseDetailMapper) {
+                       HearingRepository hearingRepository, CaseMemberRepository caseMemberRepository, CaseDetailMapper caseDetailMapper, FirebaseChatService firebaseChatService) {
         this.caseRepository = caseRepository;
         this.userRepository = userRepository;
         this.caseMapper = caseMapper;
         this.hearingRepository = hearingRepository;
         this.caseMemberRepository = caseMemberRepository;
         this.caseDetailMapper = caseDetailMapper;
+        this.firebaseChatService = firebaseChatService;
     }
 
     @Transactional
     public UUID createCase(CreateCaseRequest request) {
-        // print comming request details
-        System.out.println("COurt Type:" + request.getCourtType());
+        // print incoming request details
+        System.out.println("Court Type:" + request.getCourtType());
 
         // 1. Get the authenticated lawyer creating the case.
         User lawyer = getCurrentUser();
@@ -80,13 +90,12 @@ public class CaseService {
         newCase.setOpposingPartyName(request.getOpposingPartyName());
 
 
+
         // Get the case number from the request and update that to a upper case without white spaces.
         String normalizedCaseNumber = null;
         if (request.getCaseNumber() != null && !request.getCaseNumber().trim().isEmpty()) {
             normalizedCaseNumber = request.getCaseNumber().toUpperCase().trim();
         } else {
-            // DECISION: If the case number is required, we should throw an error here.
-            // Based on your entity (@Column(nullable=false)), it is required.
             throw new IllegalArgumentException("Case Number is required and cannot be empty.");
         }
 
@@ -114,10 +123,19 @@ public class CaseService {
             initialHearing.setHearingDate(request.getInitialHearingDate().atStartOfDay().toInstant(ZoneOffset.UTC));
             initialHearing.setStatus(HearingStatus.PLANNED);
             initialHearing.setCreatedByUser(lawyer);
+
             initialHearing.setTitle("Initial Hearing");
             initialHearing.setLocation(request.getCourt());
+            initialHearing.setLawyer(lawyer);
             hearingRepository.save(initialHearing);
         }
+
+        // ==========================================================
+        //  START: NEW FIREBASE CHAT INTEGRATION LOGIC
+        // ==========================================================
+
+        List<User> chatMembers = new ArrayList<>();
+        chatMembers.add(lawyer); // Add the lawyer creating the case
 
         // 4. IMPORTANT: NO client user is created here. The invitation flow is now separate.
 
@@ -130,16 +148,25 @@ public class CaseService {
                 throw new SecurityException("Cannot assign a junior from another firm.");
             }
             caseMemberRepository.save(new CaseMember(savedCase, juniorUser));
+            chatMembers.add(juniorUser); // Also add the junior to the chat members list
         }
 
         // 6. The lawyer who creates the case is automatically a member so they can see it in their "My Cases" view.
         caseMemberRepository.save(new CaseMember(savedCase, lawyer));
 
+        // Only search for the client by email. If they already exist, add them.
+        userRepository.findByEmail(request.getClientEmail())
+                .ifPresent(chatMembers::add);
+
+        // Create the channel with whomever is currently available
+        String channelId = firebaseChatService.createCaseChannel(savedCase.getId(), savedCase.getCaseTitle(), chatMembers);
+        if (channelId != null) {
+            savedCase.setChatChannelId(channelId);
+            caseRepository.save(savedCase);
+        }
+
         return savedCase.getId();
     }
-    // --- ▲▲▲ END OF REFACTORED METHOD ▲▲▲ ---
-
-    // --- OTHER METHODS REMAIN UNCHANGED ---
 
     public List<CaseResponseDTO> getCasesForCurrentUser() {
         User currentUser = getCurrentUser();
@@ -219,7 +246,6 @@ public class CaseService {
         }
 
         caseMapper.updateCaseFromDto(updateRequest, existingCase);
-
         Case updatedCase = caseRepository.save(existingCase);
 
         return caseMapper.toResponseDto(updatedCase);
@@ -239,9 +265,87 @@ public class CaseService {
         caseRepository.save(existingCase);
     }
 
+
+    /**
+     * Fetch cases for the current user, applying dynamic set of filters.
+     * All params are optional.
+     */
+    public List<CaseResponseDTO> findCasesForCurrentUser(
+            String searchTerm, String caseType, String status, String court, LocalDate startDate, LocalDate endDate
+    ) {
+        User currentUser = getCurrentUser();
+        List<Case> cases;
+
+        // Convert empty strings from the frontend to nulls for our query
+        String finalSearchTerm = (searchTerm != null && !searchTerm.isBlank()) ? searchTerm : null;
+        String finalCaseType = (caseType != null && !caseType.isBlank() && !caseType.equals("All Types")) ? caseType : null;
+        String finalCourt = (court != null && !court.isBlank() && !court.equals("All Courts")) ? court : null;
+
+        CaseStatus finalStatus = null;
+        if (status != null && !status.isBlank() && !status.equalsIgnoreCase("All Cases")) {
+            try {
+                // This will convert "CLOSED" (String) to CaseStatus.CLOSED (Enum)
+                finalStatus = CaseStatus.valueOf(status.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                // Handle cases where the frontend sends an invalid status string
+                System.err.println("Invalid status value provided: " + status);
+            }
+        }
+
+        // The logic is now a simple if/else to call the correct repository method
+        if (currentUser.getRole() == AppRole.LAWYER) {
+            cases = caseRepository.findCasesForLawyerWithFilters(
+                    currentUser.getFirm().getId(),
+                    finalSearchTerm,
+                    finalCaseType,
+                    finalCourt,
+                    finalStatus
+            );
+        } else {
+            // JUNIOR or CLIENT
+            cases = caseRepository.findCasesForMemberWithFilters(
+                    currentUser.getId(),
+                    finalSearchTerm,
+                    finalCaseType,
+                    finalCourt,
+                    finalStatus
+            );
+        }
+
+        // The mapping part remains the same
+        return cases.stream()
+                .map(caseMapper::toResponseDto)
+                .collect(Collectors.toList());
+    }
+
+
     private User getCurrentUser() {
         String firebaseUid = SecurityContextHolder.getContext().getAuthentication().getName();
         return userRepository.findByFirebaseUid(firebaseUid)
                 .orElseThrow(() -> new RuntimeException("Authenticated user not found in database."));
+    }
+
+    public List<ChatChannelDTO> getChatChannelsForCurrentUser() {
+        User currentUser = getCurrentUser();
+        List<Case> cases = caseRepository.findCasesByUserId(currentUser.getId());
+
+        return cases.stream().map(aCase -> {
+            ChatChannelDTO channelDTO = new ChatChannelDTO();
+            channelDTO.setCaseId(aCase.getId());
+            channelDTO.setChatChannelId(aCase.getChatChannelId());
+            channelDTO.setCaseTitle(aCase.getCaseTitle());
+
+            List<MemberDTO> memberDTOs = aCase.getMembers().stream().map(member -> {
+                MemberDTO memberDTO = new MemberDTO();
+                User memberUser = member.getUser();
+                memberDTO.setUserId(memberUser.getId());
+                memberDTO.setName(memberUser.getFirstName() + " " + memberUser.getLastName());
+                memberDTO.setRole(memberUser.getRole());
+                return memberDTO;
+            }).collect(Collectors.toList());
+
+            channelDTO.setMembers(memberDTOs);
+            return channelDTO;
+        }).collect(Collectors.toList());
     }
 }

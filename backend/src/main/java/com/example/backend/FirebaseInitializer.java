@@ -17,7 +17,7 @@ public class FirebaseInitializer {
     public void init() throws IOException {
         InputStream serviceAccount = getClass().getClassLoader().getResourceAsStream("serviceAccountKey.json");
 
-//        FileInputStream serviceAccount = new FileInputStream("src/main/resources/serviceAccountKey.json");
+//        FileInputStream serviceAccount = new FileInputStream("D:\\attorney.-backend\\backend\\src\\main\\resources\\serviceAccountKey.json");
 
         assert serviceAccount != null;
         FirebaseOptions options = FirebaseOptions.builder()

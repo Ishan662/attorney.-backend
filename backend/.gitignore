@@ -14,7 +14,8 @@ target/
 .sts4-cache
 
 ### IntelliJ IDEA ###
-.idea
+
+.idea/
 *.iws
 *.iml
 *.ipr
@@ -36,7 +37,6 @@ build/
 **/src/main/resources/serviceAccountKey.json
 
 ## properties
-**/src/main/resources/application.properties
 **/src/main/resources/.env
 
 **/src/main/resources/

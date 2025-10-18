@@ -15,9 +15,6 @@ import java.util.Map;
 // @ControllerAdvice tells Spring that this class will handle exceptions across the whole application.
 @ControllerAdvice
 public class RestExceptionHandler extends ResponseEntityExceptionHandler {
-
-    // --- ▼▼▼ THIS IS THE HANDLER FOR OUR SPECIFIC PROBLEM ▼▼▼ ---
-
     /**
      * Handles IllegalStateException.
      * We use this specifically for cases like "email already exists," which is a user input conflict.
