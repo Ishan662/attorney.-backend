@@ -1,9 +1,9 @@
-// >> In a new file: service/HearingService.java
 package com.example.backend.service;
 
 import com.example.backend.dto.hearingDTOS.CreateHearingDto;
 import com.example.backend.dto.hearingDTOS.HearingDTO;
 import com.example.backend.dto.hearingDTOS.UpdateHearingDto;
+import com.example.backend.exception.HearingValidationException;
 import com.example.backend.mapper.HearingMapper;
 import com.example.backend.model.AppRole;
 import com.example.backend.model.cases.Case;
@@ -12,6 +12,7 @@ import com.example.backend.model.user.User;
 import com.example.backend.repositories.CaseRepository;
 import com.example.backend.repositories.HearingRepository;
 import com.example.backend.repositories.UserRepository;
+import com.example.backend.util.ValidationResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -28,12 +29,32 @@ public class HearingService {
     @Autowired private CaseRepository caseRepository;
     @Autowired private UserRepository userRepository;
     @Autowired private HearingMapper hearingMapper;
+    @Autowired private CalendarValidationService calendarValidationService;
 
     public List<HearingDTO> getHearingsForCase(UUID caseId) {
         User currentUser = getCurrentUser();
         Case aCase = findCaseAndVerifyAccess(caseId, currentUser);
+
         List<Hearing> hearings = hearingRepository.findByaCase_IdOrderByHearingDateAsc(aCase.getId());
         return hearingMapper.toHearingDtoList(hearings);
+    }
+
+    public List<HearingDTO> getHearingsByCurrentUser() {
+        User currentUser = getCurrentUser();
+        List<Hearing> hearings = hearingRepository.findAllByLawyerId(currentUser.getId());
+        return hearingMapper.toHearingDtoList(hearings);
+    }
+
+    private HearingDTO mapToDto(Hearing hearing) {
+        HearingDTO dto = new HearingDTO();
+        dto.setId(hearing.getId());
+        dto.setTitle(hearing.getTitle());
+        dto.setStartTime(hearing.getStartTime());
+        dto.setEndTime(hearing.getEndTime());
+        dto.setLocation(hearing.getLocation());
+        dto.setNote(hearing.getNote());
+        dto.setStatus(hearing.getStatus());
+        return dto;
     }
 
     @Transactional
@@ -42,46 +63,44 @@ public class HearingService {
         Case aCase = findCaseAndVerifyAccess(caseId, currentUser);
 
         UUID firmId = aCase.getFirm().getId();
-
-        User lawyer = userRepository.findFirstByFirmIdAndRole(firmId, AppRole.LAWYER)
+        User lawyer = userRepository
+                .findFirstByFirmIdAndRole(firmId, AppRole.LAWYER)
                 .orElseThrow(() -> new RuntimeException("No lawyer found for this firm"));
 
+        // map dto → entity
         Hearing newHearing = hearingMapper.createDtoToEntity(createDto);
         newHearing.setLawyer(lawyer);
         newHearing.setaCase(aCase);
         newHearing.setCreatedByUser(currentUser);
 
+        // validate travel & overlap using Option 1
+        ValidationResult result = calendarValidationService.validateNewHearingWithTasks(
+                newHearing.getStartTime(),
+                newHearing.getEndTime(),
+                newHearing.getLocation(),
+                lawyer
+        );
+        if (!result.isValid()) {
+            throw new HearingValidationException(result.getMessage());
+        }
+
         Hearing savedHearing = hearingRepository.save(newHearing);
         return hearingMapper.toHearingDto(savedHearing);
-    }
-
-    // Private helper to get current user and verify their access to a case
-    private User getCurrentUser() {
-        String firebaseUid = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByFirebaseUid(firebaseUid).orElseThrow(() -> new RuntimeException("User not found"));
-    }
-
-    private Case findCaseAndVerifyAccess(UUID caseId, User user) {
-        Case aCase = caseRepository.findById(caseId).orElseThrow(() -> new RuntimeException("Case not found"));
-        // A user has access if the case belongs to their firm. More granular checks can be added.
-        if (!aCase.getFirm().getId().equals(user.getFirm().getId())) {
-            throw new AccessDeniedException("You do not have permission to access this case.");
-        }
-        return aCase;
     }
 
     @Transactional
     public HearingDTO updateHearing(UUID hearingId, UpdateHearingDto updateDto) {
         User currentUser = getCurrentUser();
-        Hearing hearing = hearingRepository.findById(hearingId)
+        Hearing hearing = hearingRepository
+                .findById(hearingId)
                 .orElseThrow(() -> new RuntimeException("Hearing not found"));
 
-        // Verify the user has access to the case this hearing belongs to
         findCaseAndVerifyAccess(hearing.getaCase().getId(), currentUser);
 
-        // Update the hearing entity with the new data from the DTO
         hearing.setTitle(updateDto.getTitle());
         hearing.setHearingDate(updateDto.getHearingDate());
+        hearing.setStartTime(updateDto.getStartTime());
+        hearing.setEndTime(updateDto.getEndTime());
         hearing.setLocation(updateDto.getLocation());
         hearing.setNote(updateDto.getNote());
         hearing.setStatus(updateDto.getStatus());
@@ -93,12 +112,29 @@ public class HearingService {
     @Transactional
     public void deleteHearing(UUID hearingId) {
         User currentUser = getCurrentUser();
-        Hearing hearing = hearingRepository.findById(hearingId)
+        Hearing hearing = hearingRepository
+                .findById(hearingId)
                 .orElseThrow(() -> new RuntimeException("Hearing not found"));
 
-        // Verify the user has access before allowing deletion
         findCaseAndVerifyAccess(hearing.getaCase().getId(), currentUser);
-
         hearingRepository.delete(hearing);
+    }
+
+    // --- helpers ---
+    public User getCurrentUser() {
+        String firebaseUid = SecurityContextHolder.getContext().getAuthentication().getName();
+        return userRepository
+                .findByFirebaseUid(firebaseUid)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
+    private Case findCaseAndVerifyAccess(UUID caseId, User user) {
+        Case aCase = caseRepository
+                .findById(caseId)
+                .orElseThrow(() -> new RuntimeException("Case not found"));
+        if (!aCase.getFirm().getId().equals(user.getFirm().getId())) {
+            throw new AccessDeniedException("You do not have permission to access this case.");
+        }
+        return aCase;
     }
 }
