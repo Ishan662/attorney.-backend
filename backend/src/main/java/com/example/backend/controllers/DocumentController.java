@@ -1,6 +1,6 @@
 package com.example.backend.controllers;
 
-import com.example.backend.model.document.Document;
+import com.example.backend.model.document.Document; // Import your new Document entity
 import com.example.backend.service.DocumentService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
