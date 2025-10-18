@@ -2,6 +2,7 @@ package com.example.backend.mapper;
 
 import com.example.backend.dto.hearingDTOS.CreateHearingDto;
 import com.example.backend.dto.hearingDTOS.HearingDTO;
+import com.example.backend.dto.hearingDTOS.UpdateHearingDto;
 import com.example.backend.model.hearing.Hearing;
 import org.springframework.stereotype.Component;
 
@@ -14,13 +15,17 @@ public class HearingMapper {
 
     public HearingDTO toHearingDto(Hearing hearing) {
         if (hearing == null) return null;
+
         HearingDTO dto = new HearingDTO();
         dto.setId(hearing.getId());
         dto.setTitle(hearing.getTitle());
         dto.setHearingDate(hearing.getHearingDate());
+        dto.setStartTime(hearing.getStartTime());
+        dto.setEndTime(hearing.getEndTime());
         dto.setLocation(hearing.getLocation());
         dto.setNote(hearing.getNote());
         dto.setStatus(hearing.getStatus());
+
         return dto;
     }
 
@@ -33,11 +38,28 @@ public class HearingMapper {
 
     public Hearing createDtoToEntity(CreateHearingDto dto) {
         if (dto == null) return null;
+
         Hearing hearing = new Hearing();
         hearing.setTitle(dto.getTitle());
         hearing.setHearingDate(dto.getHearingDate());
+        hearing.setStartTime(dto.getStartTime());
+        hearing.setEndTime(dto.getEndTime());
         hearing.setLocation(dto.getLocation());
         hearing.setNote(dto.getNote());
+        return hearing;
+    }
+
+    public Hearing updateDtoToEntity(Hearing hearing, UpdateHearingDto dto) {
+        if (hearing == null || dto == null) return hearing;
+
+        hearing.setTitle(dto.getTitle());
+        hearing.setHearingDate(dto.getHearingDate());
+        hearing.setStartTime(dto.getStartTime());
+        hearing.setEndTime(dto.getEndTime());
+        hearing.setLocation(dto.getLocation());
+        hearing.setNote(dto.getNote());
+        hearing.setStatus(dto.getStatus());
+
         return hearing;
     }
 }

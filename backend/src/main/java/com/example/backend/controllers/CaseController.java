@@ -24,7 +24,7 @@ import java.util.UUID;
 public class CaseController {
 
     private final CaseService caseService;
-
+    //initialized the case controller
     @Autowired
     public CaseController(CaseService caseService) {
         this.caseService = caseService;

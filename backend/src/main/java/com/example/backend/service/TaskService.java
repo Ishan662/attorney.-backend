@@ -47,18 +47,28 @@ public class TaskService {
                 .orElseThrow(() -> new EntityNotFoundException("User to assign task to not found with ID: " + request.getAssignedToUserId()));
 
         // 3. Create a new Task entity using the full User objects
-        Task newTask = Task.builder()
-                .title(request.getTitle())
-                .description(request.getDescription())
-                .type(request.getType())
-                .status(TaskStatus.PENDING)
-                .assignedByUser(assignedByUser) // Set the User object
-                .assignedToUser(assignedToUser) // Set the validated User object
-                .priority(TaskPriority.LAW) // Make sure to handle this if needed
-                .build();
+//        Task newTask = Task.builder()
+//                .title(request.getTitle())
+//                .description(request.getDescription())
+//                .type(request.getType())
+//                .status(TaskStatus.PENDING)
+//                .assignedByUser(assignedByUser) // Set the User object
+//                .assignedToUser(assignedToUser) // Set the validated User object
+//                .priority(TaskPriority.LAW) // Make sure to handle this if needed
+//                .build();
+
+        Task newtask2 = new Task();
+        newtask2.setTitle(request.getTitle());
+        newtask2.setDescription(request.getDescription());
+        newtask2.setType(request.getType());
+        newtask2.setStatus(TaskStatus.PENDING);
+        newtask2.setAssignedByUser(assignedByUser);
+        newtask2.setAssignedToUser(assignedToUser);
+        newtask2.setPriority(TaskPriority.LAW);
+
 
         // Save the new Task
-        Task savedTask = taskRepository.save(newTask);
+        Task savedTask = taskRepository.save(newtask2);
 
         return taskMapper.toDto(savedTask);
     }
