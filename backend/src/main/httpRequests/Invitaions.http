@@ -1,0 +1,153 @@
+### =================================================================
+### Invitation System - Test File
+### =================================================================
+
+@auth_token = Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6ImE1YTAwNWU5N2NiMWU0MjczMDBlNTJjZGQ1MGYwYjM2Y2Q4MDYyOWIiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vYXR0b3JuZXktNDU4NjIiLCJhdWQiOiJhdHRvcm5leS00NTg2MiIsImF1dGhfdGltZSI6MTc2MDc1ODU4MywidXNlcl9pZCI6Imp0elRjZlp2OWpWSHFSY2UwZVRENmMyMDM2MjMiLCJzdWIiOiJqdHpUY2ZadjlqVkhxUmNlMGVURDZjMjAzNjIzIiwiaWF0IjoxNzYwNzU4NTgzLCJleHAiOjE3NjA3NjIxODMsImVtYWlsIjoiaGV6ZWxyb2JlcnR6b24yMUBnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsImZpcmViYXNlIjp7ImlkZW50aXRpZXMiOnsiZW1haWwiOlsiaGV6ZWxyb2JlcnR6b24yMUBnbWFpbC5jb20iXX0sInNpZ25faW5fcHJvdmlkZXIiOiJwYXNzd29yZCJ9fQ.n4c1AdWsvBrOB377J4hBjl-Wd6x6zgWrrD6Ak7Z61bgKpwT1PJYMxFZ1ZtC2rXQX-W6Tf7PPwLectjgFZzJLTX3wI3ynKiq48Ek6CgAbpZyY3YfCEtCL2ysksgbvVqM_PeeREAkd9E27RtWCBl2_7Xger9Pd1t-L_G5rC9mfuydTxH4VPmvBGsnVQLSEJLQegX01oeHYyxlJaZosEGtfmP6l0Jlie7Q6HNFQwsvIgB2ZK0haACa0qBW59qFnbL1DcJmx3Lnh892If2u1MWXWT2qHsB21Si9npAUIMYcqsKJkCSrjkPG9Xb57M6rDeb8ZwF8CnsAwNSztwtwFrg3_xw
+
+### File-level variables
+@lawyer_token = {{auth_token}}
+@api_base = http://localhost:8080/api
+
+### =================================================================
+### 1. Lawyer Invites a Junior Lawyer to Join the Firm
+### =================================================================
+# This creates a general invitation for a junior lawyer
+# No specific case assignment - they join the firm
+POST {{api_base}}/invitations/create-invitation
+Content-Type: application/json
+Authorization: {{lawyer_token}}
+
+{
+  "email": "juniorlawyer@example.com",
+  "fullName": "John Smith",
+  "role": "JUNIOR_LAWYER",
+  "phoneNumber": "+1234567890",
+  "caseId": null
+}
+
+### =================================================================
+### 2. Lawyer Invites a Junior Lawyer and Assigns to Specific Case
+### =================================================================
+# This assigns the junior lawyer to a specific case immediately
+POST {{api_base}}/invitations/create-invitation
+Content-Type: application/json
+Authorization: {{lawyer_token}}
+
+{
+  "email": "juniorlawyer2@example.com",
+  "fullName": "Jane Wilson",
+  "role": "JUNIOR_LAWYER",
+  "phoneNumber": "+1234567891",
+  "caseId": "a7bdda8f-fcb3-441f-a195-05c687d552e0"
+}
+
+### =================================================================
+### 3. Lawyer Invites a Client (General Access)
+### =================================================================
+# Client gets general access to firm services
+POST {{api_base}}/invitations/create-invitation
+Content-Type: application/json
+Authorization: {{lawyer_token}}
+
+{
+  "email": "client@example.com",
+  "fullName": "Michael Johnson",
+  "role": "CLIENT",
+  "phoneNumber": "+1234567892",
+  "caseId": null
+}
+
+### =================================================================
+### 4. Lawyer Invites a Client for Specific Case
+### =================================================================
+# Client gets access to view and participate in a specific case
+POST {{api_base}}/invitations/create-invitation
+Content-Type: application/json
+Authorization: {{lawyer_token}}
+
+{
+  "email": "client2@example.com",
+  "fullName": "Sarah Davis",
+  "role": "CLIENT",
+  "phoneNumber": "+1234567893",
+  "caseId": "a7bdda8f-fcb3-441f-a195-05c687d552e0"
+}
+
+### =================================================================
+### 5. Error Test: Non-Lawyer Tries to Send Invitation
+### =================================================================
+# This should fail with 403 Forbidden due to hasRole('LAWYER') security
+# You would need a CLIENT or JUNIOR_LAWYER token to test this
+POST {{api_base}}/invitations/create-invitation
+Content-Type: application/json
+Authorization: Bearer invalid_token_here
+
+{
+  "email": "shouldfail@example.com",
+  "fullName": "Should Fail",
+  "role": "CLIENT",
+  "phoneNumber": "+1234567894",
+  "caseId": null
+}
+
+### =================================================================
+### 6. Error Test: Invalid Role
+### =================================================================
+# This should fail with validation error for invalid role
+POST {{api_base}}/invitations/create-invitation
+Content-Type: application/json
+Authorization: {{lawyer_token}}
+
+{
+  "email": "invalid@example.com",
+  "fullName": "Invalid Role Test",
+  "role": "INVALID_ROLE",
+  "phoneNumber": "+1234567895",
+  "caseId": null
+}
+
+### =================================================================
+### 7. Error Test: Missing Required Fields
+### =================================================================
+# This should fail due to missing email and fullName
+POST {{api_base}}/invitations/create-invitation
+Content-Type: application/json
+Authorization: {{lawyer_token}}
+
+{
+  "role": "CLIENT",
+  "phoneNumber": "+1234567896",
+  "caseId": null
+}
+
+### =================================================================
+### 8. Error Test: Invalid Email Format
+### =================================================================
+# This should fail due to invalid email format
+POST {{api_base}}/invitations/create-invitation
+Content-Type: application/json
+Authorization: {{lawyer_token}}
+
+{
+  "email": "invalid-email-format",
+  "fullName": "Invalid Email Test",
+  "role": "CLIENT",
+  "phoneNumber": "+1234567897",
+  "caseId": null
+}
+
+### =================================================================
+### 9. Error Test: Invalid Case ID
+### =================================================================
+# This should fail if the case ID doesn't exist
+POST {{api_base}}/invitations/create-invitation
+Content-Type: application/json
+Authorization: {{lawyer_token}}
+
+{
+  "email": "invalidcase@example.com",
+  "fullName": "Invalid Case Test",
+  "role": "CLIENT",
+  "phoneNumber": "+1234567898",
+  "caseId": "00000000-0000-0000-0000-000000000000"
+}
