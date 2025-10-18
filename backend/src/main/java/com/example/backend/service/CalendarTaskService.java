@@ -119,11 +119,12 @@ public class CalendarTaskService {
     }
 
     // --- helper: get current authenticated user ---
-    private User getCurrentUser() {
+    public User getCurrentUser() {
         String firebaseUid =
                 SecurityContextHolder.getContext().getAuthentication().getName();
         return userRepository
                 .findByFirebaseUid(firebaseUid)
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
+
 }

@@ -14,21 +14,37 @@ public class ValidationResult {
         this.travelText = travelText;
     }
 
-    // Success without travel info
+    /**
+     * Success result with custom message (no travel info)
+     */
+    public static ValidationResult ok(String message) {
+        return new ValidationResult(true, message, null, null);
+    }
+
+    /**
+     * Success result with default message
+     */
     public static ValidationResult ok() {
         return new ValidationResult(true, "Validation passed", null, null);
     }
 
-    // Success with travel info
+    /**
+     * Success result with travel info
+     */
     public static ValidationResult ok(Long travelSeconds, String travelText) {
         return new ValidationResult(true, "Validation passed", travelSeconds, travelText);
     }
 
-    // Failure with message
+    /**
+     * Failure result with message
+     */
     public static ValidationResult fail(String message) {
         return new ValidationResult(false, message, null, null);
     }
 
+    /**
+     * Getters
+     */
     public boolean isValid() {
         return valid;
     }
@@ -43,5 +59,18 @@ public class ValidationResult {
 
     public String getTravelText() {
         return travelText;
+    }
+
+    /**
+     * Optional: convenience method for frontend-friendly JSON
+     */
+    @Override
+    public String toString() {
+        return "ValidationResult{" +
+                "valid=" + valid +
+                ", message='" + message + '\'' +
+                ", travelSeconds=" + travelSeconds +
+                ", travelText='" + travelText + '\'' +
+                '}';
     }
 }

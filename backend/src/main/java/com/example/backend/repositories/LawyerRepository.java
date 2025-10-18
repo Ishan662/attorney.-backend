@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface LawyerRepository extends JpaRepository<Lawyer, UUID> {
-    Optional<Lawyer> findByUserId(UUID userId);
+public interface LawyerRepository extends JpaRepository<Lawyer, Long> {
+    Optional<Lawyer> findByUser_Id(UUID userId); // note the underscore
 }
+
