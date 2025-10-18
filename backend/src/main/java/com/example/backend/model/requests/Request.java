@@ -1,32 +1,33 @@
+// java
 package com.example.backend.model.requests;
 
 import com.example.backend.model.cases.Case;
-import com.example.backend.model.hearing.HearingStatus;
 import com.example.backend.model.user.User;
 import jakarta.persistence.*;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.UUID;
 
 @Entity
 @Table(name = "requests")
-
 public class Request {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
-    // This relationship links back to the Case entity in the 'cases' package.
+    // link to Case entity
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "case_id", nullable = false)
     private Case aCase;
 
-    // This links to the User entity in the 'user' package.
+    // client who created the request
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "created_by_client_id", nullable = false)
     private User createdByClient;
 
+    // basic meeting fields from popup
     @Column(nullable = false)
     private String title;
 
@@ -34,15 +35,33 @@ public class Request {
     private String location;
 
     @Column(columnDefinition = "TEXT")
-    private String note;
+    private String note; // special note
 
-    @Column(nullable = false)
-    private java.time.LocalDateTime requestedDate;
+    @Column(name = "meeting_date", nullable = false)
+    private LocalDate meetingDate;
+
+    @Column(name = "start_time", nullable = false)
+    private LocalTime startTime;
+
+    @Column(name = "end_time", nullable = false)
+    private LocalTime endTime;
+
+    @Column(name = "duration_minutes", nullable = true)
+    private Integer durationMinutes; // optional, can be calculated from start/end
+
+    @Column(name = "guests")
+    private String guests; // comma separated guest list or emails
+
+    @Column(name = "google_meet_enabled", nullable = false)
+    private boolean googleMeetEnabled = false;
+
+    @Column(name = "google_meet_link")
+    private String googleMeetLink;
 
     @Column(nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 
-    @Column(nullable = false, updatable = false)
+    @Column(nullable = false)
     private Instant updatedAt = Instant.now();
 
     @Enumerated(EnumType.STRING)
@@ -53,6 +72,7 @@ public class Request {
     @JoinColumn(name = "requested_lawyer_id", nullable = false)
     private User requestedLawyer;
 
+    // --- Getters and Setters ---
 
     public UUID getId() {
         return id;
@@ -102,12 +122,60 @@ public class Request {
         this.note = note;
     }
 
-    public LocalDateTime getRequestedDate() {
-        return requestedDate;
+    public LocalDate getMeetingDate() {
+        return meetingDate;
     }
 
-    public void setRequestedDate(LocalDateTime requestedDate) {
-        this.requestedDate = requestedDate;
+    public void setMeetingDate(LocalDate meetingDate) {
+        this.meetingDate = meetingDate;
+    }
+
+    public LocalTime getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(LocalTime startTime) {
+        this.startTime = startTime;
+    }
+
+    public LocalTime getEndTime() {
+        return endTime;
+    }
+
+    public void setEndTime(LocalTime endTime) {
+        this.endTime = endTime;
+    }
+
+    public Integer getDurationMinutes() {
+        return durationMinutes;
+    }
+
+    public void setDurationMinutes(Integer durationMinutes) {
+        this.durationMinutes = durationMinutes;
+    }
+
+    public String getGuests() {
+        return guests;
+    }
+
+    public void setGuests(String guests) {
+        this.guests = guests;
+    }
+
+    public boolean isGoogleMeetEnabled() {
+        return googleMeetEnabled;
+    }
+
+    public void setGoogleMeetEnabled(boolean googleMeetEnabled) {
+        this.googleMeetEnabled = googleMeetEnabled;
+    }
+
+    public String getGoogleMeetLink() {
+        return googleMeetLink;
+    }
+
+    public void setGoogleMeetLink(String googleMeetLink) {
+        this.googleMeetLink = googleMeetLink;
     }
 
     public Instant getCreatedAt() {
@@ -142,5 +210,6 @@ public class Request {
         this.requestedLawyer = requestedLawyer;
     }
 }
+
 
 
