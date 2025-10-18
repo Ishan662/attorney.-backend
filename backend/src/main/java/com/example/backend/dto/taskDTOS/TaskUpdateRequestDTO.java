@@ -1,6 +1,6 @@
 package com.example.backend.dto.taskDTOS;
 
-import com.example.backend.model.tasks.TaskStatus; // Make sure this enum exists
+import com.example.backend.model.tasks.TaskStatus;
 
 public class TaskUpdateRequestDTO {
     private TaskStatus status;

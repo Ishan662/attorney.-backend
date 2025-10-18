@@ -90,6 +90,7 @@ public class CaseService {
         newCase.setOpposingPartyName(request.getOpposingPartyName());
 
 
+
         // Get the case number from the request and update that to a upper case without white spaces.
         String normalizedCaseNumber = null;
         if (request.getCaseNumber() != null && !request.getCaseNumber().trim().isEmpty()) {
@@ -122,6 +123,7 @@ public class CaseService {
             initialHearing.setHearingDate(request.getInitialHearingDate().atStartOfDay().toInstant(ZoneOffset.UTC));
             initialHearing.setStatus(HearingStatus.PLANNED);
             initialHearing.setCreatedByUser(lawyer);
+
             initialHearing.setTitle("Initial Hearing");
             initialHearing.setLocation(request.getCourt());
             initialHearing.setLawyer(lawyer);
