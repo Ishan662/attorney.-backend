@@ -1,0 +1,89 @@
+### =================================================================
+### Admin User Management - Test File
+### =================================================================
+
+### File-level variable for the Admin's authentication token.
+### !! IMPORTANT !!
+### Replace this placeholder with a REAL, valid Firebase ID Token from a logged-in ADMIN user.
+@admin_auth_token = Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6ImVmMjQ4ZjQyZjc0YWUwZjk0OTIwYWY5YTlhMDEzMTdlZjJkMzVmZTEiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vYXR0b3JuZXktNDU4NjIiLCJhdWQiOiJhdHRvcm5leS00NTg2MiIsImF1dGhfdGltZSI6MTc1NzE0NjkxNCwidXNlcl9pZCI6IlQwVjF5RjV2UUFoTDVlWmt0OTNGVFdCYjlwTjIiLCJzdWIiOiJUMFYxeUY1dlFBaEw1ZVprdDkzRlRXQmI5cE4yIiwiaWF0IjoxNzU3MTQ2OTE0LCJleHAiOjE3NTcxNTA1MTQsImVtYWlsIjoiZGFyc2hhbmEyMDIxc3VqYW5AZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImZpcmViYXNlIjp7ImlkZW50aXRpZXMiOnsiZW1haWwiOlsiZGFyc2hhbmEyMDIxc3VqYW5AZ21haWwuY29tIl19LCJzaWduX2luX3Byb3ZpZGVyIjoicGFzc3dvcmQifX0.KO2tg-9TrUcqoU5ogwSs60IyGQZK1KKfSc0n2bZvO2Zg1TW1e3ve62FnjfSunvmSZfryH9ni6GAm8ebSohefsgdfsV4oIrvwvHrPP-PVTG4qv9rTjK02UnwOYP-OJVweDW__aG41iSdLKBZ87j55lRxoSZMreGjDSOo5oVTN_DEZrygrzSddhGD9M5bOcyl32m8kiMsoXwJhJfAoON0YUiFoeYIVr4Xwif2cRWClckrlK5xkZlsPtzJUJDy4Imr09V8nwV_OOuXaNToP9Jq-mSThrXYUGVJcfVC3R6kBpp76Aff1yj__o3nppTSz29bcyng44gOpnzBIpQvpkkouqw
+
+
+
+### File-level variable to hold the ID of a user you want to manage (update/delete).
+### !! ACTION !!
+### After running Request #1, copy a non-admin user's ID here to test the other endpoints.
+@user_id_to_manage =
+
+
+### =================================================================
+### 1. Get All Users (GET /api/admin/users)
+### =================================================================
+# This should return a list of all users in the system, formatted with the
+# detailed `AdminUserViewDTO`.
+# This request will FAIL with a 403 Forbidden if the token is not from an ADMIN.
+GET http://localhost:8080/api/admin/users
+Authorization: {{admin_auth_token}}
+
+
+### =================================================================
+### 2. Update a User's Status (PUT /api/admin/users/{id}/status)
+### =================================================================
+# This request changes the status of the user specified in @user_id_to_manage.
+# Try changing 'INACTIVE' to 'ACTIVE' and running it again.
+# !! NOTE !! This will fail if you try to update an ADMIN user.
+PUT http://localhost:8080/api/admin/users/{{user_id_to_manage}}/status
+Content-Type: application/json
+Authorization: {{admin_auth_token}}
+
+{
+  "newStatus": "INACTIVE"
+}
+
+
+### =================================================================
+### 3. Verify the Status Update (GET /api/admin/users)
+### =================================================================
+# Run the "Get All Users" request again. Find the user you just updated
+# in the list and confirm their "status" field has changed to "INACTIVE".
+GET http://localhost:8080/api/admin/users
+Authorization: {{admin_auth_token}}
+
+
+### =================================================================
+### 4. Delete a User (DELETE /api/admin/users/{id})
+### =================================================================
+# This request will permanently delete the user specified in @user_id_to_manage
+# from both your PostgreSQL database and Firebase Authentication.
+# Use with caution!
+# This is expected to return a "204 No Content" success status.
+DELETE http://localhost:8080/api/admin/users/{{user_id_to_manage}}
+Authorization: {{admin_auth_token}}
+
+
+### =================================================================
+### 5. Verify Deletion (GET /api/admin/users)
+### =================================================================
+# Run the "Get All Users" request one last time.
+# The user you deleted should no longer appear in the list.
+GET http://localhost:8080/api/admin/users
+Authorization: {{admin_auth_token}}
+
+
+### =================================================================
+### 6. Test Failure Case: Non-Admin Access
+### =================================================================
+# !! IMPORTANT !!
+# For this test, manually replace {{admin_auth_token}} with a token from a regular LAWYER user.
+# This request is EXPECTED TO FAIL with a 403 Forbidden status because
+# the entire /api/admin/** path is protected by the @PreAuthorize("hasRole('ADMIN')") annotation.
+GET http://localhost:8080/api/admin/users
+# Replace the line below with a lawyer's token to test
+Authorization: {{admin_auth_token}}
+
+### =================================================================
+### 7. Get User Counts Summary (GET /api/admin/users/counts)
+### =================================================================
+# This request fetches a summary of user counts, broken down by role.
+# It will only succeed if the token is from an ADMIN user.
+GET http://localhost:8080/api/admin/users/counts
+Authorization: {{admin_auth_token}}
