@@ -22,6 +22,9 @@ public class SubscriptionPlan {
     @Column(nullable = false)
     private BigDecimal priceMonthly;
 
+    @Column(nullable = true, unique = true)
+    private String stripePriceId;
+
     // The 'jsonb' column type is specified for PostgreSQL
     @Type(JsonType.class)
     @Column(columnDefinition = "jsonb", nullable = false)
@@ -40,4 +43,6 @@ public class SubscriptionPlan {
     public void setFeatures(Map<String, Object> features) { this.features = features; }
     public boolean isActive() { return isActive; }
     public void setActive(boolean active) { isActive = active; }
+    public String getStripePriceId() { return stripePriceId; }
+    public void setStripePriceId(String stripePriceId) { this.stripePriceId = stripePriceId; }
 }
