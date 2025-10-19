@@ -1,12 +1,9 @@
 package com.example.backend.service;
 
 // DTOs
-import com.example.backend.dto.caseDTOS.CaseDetailDTO;
-import com.example.backend.dto.caseDTOS.CaseResponseDTO;
-import com.example.backend.dto.caseDTOS.CreateCaseRequest;
+import com.example.backend.dto.caseDTOS.*;
 
 // Mapper and Model classes
-import com.example.backend.dto.caseDTOS.UpdateCaseRequest;
 import com.example.backend.dto.chatDTOS.ChatChannelDTO;
 import com.example.backend.dto.chatDTOS.MemberDTO;
 import com.example.backend.mapper.CaseDetailMapper;
@@ -141,6 +138,11 @@ public class CaseService {
         newCase.setAgreedFee(request.getAgreedFee());
         newCase.setPaymentStatus(request.getPaymentStatus());
         newCase.setCaseTitle(request.getClientName() + " vs " + request.getOpposingPartyName());
+
+        // --- NEW: SET THE DYNAMIC ADDITIONAL DETAILS ---
+        if (request.getAdditionalDetails() != null && !request.getAdditionalDetails().isEmpty()) {
+            newCase.setDetails(request.getAdditionalDetails());
+        }
 
         Case savedCase = caseRepository.save(newCase);
 
@@ -386,5 +388,36 @@ public class CaseService {
             channelDTO.setMembers(memberDTOs);
             return channelDTO;
         }).collect(Collectors.toList());
+    }
+
+    @Transactional
+    public CaseDetailDTO updateAdditionalDetails(UUID caseId, UpdateAdditionalDetailsRequestDTO request) {
+        // 1. Get the current user and the case, with security checks.
+        User currentUser = getCurrentUser();
+        Case aCase = caseRepository.findById(caseId)
+                .orElseThrow(() -> new EntityNotFoundException("Case not found with ID: " + caseId));
+
+        // 2. Verify the user has permission to edit this case.
+        // This reuses the same robust security logic from your existing getCaseById method.
+        boolean hasAccess;
+        if (currentUser.getRole() == AppRole.LAWYER) {
+            hasAccess = aCase.getFirm().getId().equals(currentUser.getFirm().getId());
+        } else {
+            hasAccess = aCase.getMembers().stream()
+                    .anyMatch(member -> member.getUser().getId().equals(currentUser.getId()));
+        }
+        if (!hasAccess) {
+            throw new AccessDeniedException("You do not have permission to update this case.");
+        }
+
+        // 3. Set the new details. This replaces the entire JSON blob.
+        aCase.setDetails(request.getAdditionalDetails());
+
+        // 4. Save the updated case.
+        Case updatedCase = caseRepository.save(aCase);
+
+        // 5. Return the full, updated CaseDetailDTO so the frontend can refresh its state.
+        // This will now reflect the changes you just made.
+        return caseDetailMapper.toDetailDto(updatedCase);
     }
 }

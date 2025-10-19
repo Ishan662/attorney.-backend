@@ -138,6 +138,13 @@
             <version>25.10.0</version>
         </dependency>
 
+		<!-- In your pom.xml, inside the <dependencies> section -->
+		<dependency>
+			<groupId>io.hypersistence</groupId>
+			<artifactId>hypersistence-utils-hibernate-60</artifactId> <!-- Use 62 for Spring Boot 3.2, 63 for 3.3, etc. Check your version. -->
+			<version>3.7.0</version>
+		</dependency>
+
 
     </dependencies>
 

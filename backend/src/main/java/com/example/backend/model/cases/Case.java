@@ -3,11 +3,14 @@ package com.example.backend.model.cases;
 import com.example.backend.model.firm.Firm;
 import com.example.backend.model.hearing.Hearing;
 import com.example.backend.model.user.User; // Ensure this import points to your User entity
+import com.vladmihalcea.hibernate.type.json.JsonType;
 import jakarta.persistence.*;
+import org.hibernate.annotations.Type;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -76,6 +79,14 @@ public class Case {
     @Column(nullable = false)
     private PaymentStatus paymentStatus = PaymentStatus.NOT_INVOICED;
 
+    // --- NEW FIELD FOR EXTENDED DETAILS ---
+    @Type(JsonType.class)
+    @Column(columnDefinition = "jsonb")
+    private Map<String, Object> details;
+
+    // --- Add Getter and Setter for the new field ---
+    public Map<String, Object> getDetails() { return details; }
+    public void setDetails(Map<String, Object> details) { this.details = details; }
 
     // --- Status & Timestamps ---
     @Enumerated(EnumType.STRING)
