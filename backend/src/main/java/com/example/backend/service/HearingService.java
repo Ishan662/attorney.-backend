@@ -19,6 +19,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -73,6 +75,19 @@ public class HearingService {
         newHearing.setaCase(aCase);
         newHearing.setCreatedByUser(currentUser);
 
+        // ✅ if frontend doesn't send startTime or endTime, assign current time
+        if (newHearing.getStartTime() == null) {
+            newHearing.setStartTime(LocalDateTime.now());
+        }
+        if (newHearing.getEndTime() == null) {
+            newHearing.setEndTime(LocalDateTime.now().plusHours(1)); // default 1 hour later
+        }
+
+        // ✅ also make sure hearingDate is set if null
+        if (newHearing.getHearingDate() == null) {
+            newHearing.setHearingDate(Instant.now());
+        }
+
         // validate travel & overlap using Option 1
         ValidationResult result = calendarValidationService.validateNewHearingWithTasks(
                 newHearing.getStartTime(),
@@ -104,6 +119,17 @@ public class HearingService {
         hearing.setLocation(updateDto.getLocation());
         hearing.setNote(updateDto.getNote());
         hearing.setStatus(updateDto.getStatus());
+
+        // ✅ handle null start/end time in update as well
+        if (hearing.getStartTime() == null) {
+            hearing.setStartTime(LocalDateTime.now());
+        }
+        if (hearing.getEndTime() == null) {
+            hearing.setEndTime(LocalDateTime.now().plusHours(1));
+        }
+        if (hearing.getHearingDate() == null) {
+            hearing.setHearingDate(Instant.now());
+        }
 
         Hearing updatedHearing = hearingRepository.save(hearing);
         return hearingMapper.toHearingDto(updatedHearing);

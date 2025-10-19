@@ -1,12 +1,9 @@
 package com.example.backend.service;
 
 // DTOs
-import com.example.backend.dto.caseDTOS.CaseDetailDTO;
-import com.example.backend.dto.caseDTOS.CaseResponseDTO;
-import com.example.backend.dto.caseDTOS.CreateCaseRequest;
+import com.example.backend.dto.caseDTOS.*;
 
 // Mapper and Model classes
-import com.example.backend.dto.caseDTOS.UpdateCaseRequest;
 import com.example.backend.dto.chatDTOS.ChatChannelDTO;
 import com.example.backend.dto.chatDTOS.MemberDTO;
 import com.example.backend.mapper.CaseDetailMapper;
@@ -27,6 +24,7 @@ import com.example.backend.repositories.CaseMemberRepository;
 
 // Other imports...
 import com.example.backend.service.FirebaseChat.FirebaseChatService;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.AccessDeniedException;
@@ -83,10 +81,37 @@ public class CaseService {
         newCase.setFirm(lawyer.getFirm());
         newCase.setCreatedBy(lawyer);
 
-        // Map all fields directly from the DTO.
-        newCase.setClientName(request.getClientName());
-        newCase.setClientPhone(request.getClientPhone());
-        newCase.setClientEmail(request.getClientEmail());
+        // This list will hold all users who need to be members from the start.
+        List<User> initialMembers = new ArrayList<>();
+        initialMembers.add(lawyer); // The lawyer is always a member.
+
+        // 3. --- NEW & CORRECTED CLIENT HANDLING LOGIC ---
+        if (request.getExistingClientId() != null) {
+            // SCENARIO A: An existing client was selected from the dropdown.
+            User clientUser = userRepository.findById(request.getExistingClientId())
+                    .orElseThrow(() -> new EntityNotFoundException("Selected existing client not found."));
+
+            // Security check: ensure the selected client is in the lawyer's firm.
+            if (!clientUser.getFirm().getId().equals(lawyer.getFirm().getId())) {
+                throw new SecurityException("Cannot associate a client from another firm.");
+            }
+
+            // Populate the case with the existing client's verified details.
+            newCase.setClientName(clientUser.getFirstName() + " " + clientUser.getLastName());
+            newCase.setClientPhone(clientUser.getPhoneNumber());
+            newCase.setClientEmail(clientUser.getEmail());
+
+            // Add this user to the list for membership and chat.
+            initialMembers.add(clientUser);
+
+        } else {
+            // SCENARIO B: A new client's details were entered as plain text.
+            // The workflow is to just record the details on the case. No User is created.
+            newCase.setClientName(request.getClientName());
+            newCase.setClientPhone(request.getClientPhone());
+            newCase.setClientEmail(request.getClientEmail());
+        }
+
         newCase.setOpposingPartyName(request.getOpposingPartyName());
 
 
@@ -114,6 +139,11 @@ public class CaseService {
         newCase.setPaymentStatus(request.getPaymentStatus());
         newCase.setCaseTitle(request.getClientName() + " vs " + request.getOpposingPartyName());
 
+        // --- NEW: SET THE DYNAMIC ADDITIONAL DETAILS ---
+        if (request.getAdditionalDetails() != null && !request.getAdditionalDetails().isEmpty()) {
+            newCase.setDetails(request.getAdditionalDetails());
+        }
+
         Case savedCase = caseRepository.save(newCase);
 
         // 3. Create the initial hearing for this case if a date was provided.
@@ -128,6 +158,17 @@ public class CaseService {
             initialHearing.setLocation(request.getCourt());
             initialHearing.setLawyer(lawyer);
             hearingRepository.save(initialHearing);
+        }
+
+        // 6. Associate the initial Junior, if provided.
+        if (request.getAssociatedJuniorId() != null) {
+            User juniorUser = userRepository.findById(request.getAssociatedJuniorId())
+                    .orElseThrow(() -> new IllegalArgumentException("Associated junior not found."));
+
+            if (!juniorUser.getFirm().getId().equals(lawyer.getFirm().getId())) {
+                throw new SecurityException("Cannot assign a junior from another firm.");
+            }
+            initialMembers.add(juniorUser);
         }
 
         // ==========================================================
@@ -347,5 +388,36 @@ public class CaseService {
             channelDTO.setMembers(memberDTOs);
             return channelDTO;
         }).collect(Collectors.toList());
+    }
+
+    @Transactional
+    public CaseDetailDTO updateAdditionalDetails(UUID caseId, UpdateAdditionalDetailsRequestDTO request) {
+        // 1. Get the current user and the case, with security checks.
+        User currentUser = getCurrentUser();
+        Case aCase = caseRepository.findById(caseId)
+                .orElseThrow(() -> new EntityNotFoundException("Case not found with ID: " + caseId));
+
+        // 2. Verify the user has permission to edit this case.
+        // This reuses the same robust security logic from your existing getCaseById method.
+        boolean hasAccess;
+        if (currentUser.getRole() == AppRole.LAWYER) {
+            hasAccess = aCase.getFirm().getId().equals(currentUser.getFirm().getId());
+        } else {
+            hasAccess = aCase.getMembers().stream()
+                    .anyMatch(member -> member.getUser().getId().equals(currentUser.getId()));
+        }
+        if (!hasAccess) {
+            throw new AccessDeniedException("You do not have permission to update this case.");
+        }
+
+        // 3. Set the new details. This replaces the entire JSON blob.
+        aCase.setDetails(request.getAdditionalDetails());
+
+        // 4. Save the updated case.
+        Case updatedCase = caseRepository.save(aCase);
+
+        // 5. Return the full, updated CaseDetailDTO so the frontend can refresh its state.
+        // This will now reflect the changes you just made.
+        return caseDetailMapper.toDetailDto(updatedCase);
     }
 }
