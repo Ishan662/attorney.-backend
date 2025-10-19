@@ -122,8 +122,8 @@ public class SubscriptionService {
         SessionCreateParams params = SessionCreateParams.builder()
                 .setMode(SessionCreateParams.Mode.SUBSCRIPTION)
                 .setCustomer(stripeCustomerId)
-                .setSuccessUrl("http://localhost:5173/subscription-success")
-                .setCancelUrl("http://localhost:5173/pricing")
+                .setSuccessUrl("http://localhost:5173/lawyer/dashboard")
+                .setCancelUrl("http://localhost:5173/lawyer/dashboard")
                 .addLineItem(
                         SessionCreateParams.LineItem.builder()
                                 .setPrice(plan.getStripePriceId())
