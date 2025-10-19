@@ -1,0 +1,155 @@
+### =================================================================
+### Lawyer's Team & Client Management - Test File
+### =================================================================
+
+### File-level variables for authentication tokens.
+### !! IMPORTANT !!
+### Replace this placeholder with a REAL, valid Firebase ID Token from a logged-in LAWYER user.
+@lawyer_token = Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IjlkMjEzMGZlZjAyNTg3ZmQ4ODYxODg2OTgyMjczNGVmNzZhMTExNjUiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vYXR0b3JuZXktNDU4NjIiLCJhdWQiOiJhdHRvcm5leS00NTg2MiIsImF1dGhfdGltZSI6MTc2MDgzMzc0OSwidXNlcl9pZCI6IlQwVjF5RjV2UUFoTDVlWmt0OTNGVFdCYjlwTjIiLCJzdWIiOiJUMFYxeUY1dlFBaEw1ZVprdDkzRlRXQmI5cE4yIiwiaWF0IjoxNzYwODMzNzQ5LCJleHAiOjE3NjA4MzczNDksImVtYWlsIjoiZGFyc2hhbmEyMDIxc3VqYW5AZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImZpcmViYXNlIjp7ImlkZW50aXRpZXMiOnsiZW1haWwiOlsiZGFyc2hhbmEyMDIxc3VqYW5AZ21haWwuY29tIl19LCJzaWduX2luX3Byb3ZpZGVyIjoicGFzc3dvcmQifX0.KvamWzodJIwjwwNW8DdSngGHCmJF3PHg8Ln7b7F6N60FpxjQ6rGX0oRM41VC-Q296BX3flFjRVNuLg_lvk_K5zuASFHVBNeN7cYj4DZ86trx-bxcUNzBrTiWP-E_pXVCf6ZQG3VxYH3d2G9kM-kKqfn3FBwp6AYza7YC0nmF5OOlU1pwTnHnFH_paS0x1wyK2JnatRE9C1JywP8nzJg8_OD5tmfsGfwQKaCwTuI9ZC4ndebBszY1O9q6Q-ON-_AHu2NbIz6zXfIlLR-xLCkQ4YRLgmkyRmgZJ_cJjTF-B3l8KjH_kDdqtiaKWHOaVUifrwzwRhcSA5evIhw9fXWfaQ
+
+
+
+### File-level variables to hold IDs that we get from the API.
+### These will be set automatically by the requests below.
+@junior_id_to_manage = 903c0e4d-a00e-42ad-970e-11f2f4cc8000
+@client_id_to_manage = a0147adc-330d-450b-92ef-486ac38e9583
+
+
+### =================================================================
+### 1. Get Junior Lawyers Overview (GET /api/team/juniors-overview)
+### =================================================================
+# This tests the new endpoint for populating the "Junior Lawyers" tab.
+# It should return a list of juniors with their salary info included.
+#
+# >> ACTION: Manually copy the "id" of one of the juniors from the response
+# >>         and paste it into the @junior_id_to_manage variable above.
+#
+# @name getJuniorsOverview
+GET http://localhost:8080/api/team/juniors-overview
+Authorization: {{lawyer_token}}
+
+
+### =================================================================
+### 2. Get Clients Overview (GET /api/team/clients-overview)
+### =================================================================
+# This tests the new endpoint for populating the "Clients" tab.
+# It should return a list of clients with the count of cases they are assigned to.
+#
+# >> ACTION: Manually copy the "id" of one of the clients from the response
+# >>         and paste it into the @client_id_to_manage variable above.
+#
+# @name getClientsOverview
+GET http://localhost:8080/api/team/clients-overview
+Authorization: {{lawyer_token}}
+
+
+### =================================================================
+### 3. Deactivate a Junior (PUT /api/team/users/{id}/status)
+### =================================================================
+# This request changes the status of the junior specified in @junior_id_to_manage
+# to INACTIVE. This should return a 200 OK with no content.
+PUT http://localhost:8080/api/team/users/{{junior_id_to_manage}}/status
+Content-Type: application/json
+Authorization: {{lawyer_token}}
+
+{
+  "newStatus": "INACTIVE"
+}
+
+
+### =================================================================
+### 4. Verify Junior's Status Change
+### =================================================================
+# Run the "Get Junior Lawyers Overview" request again. Find the user you just
+# updated and confirm their "status" field has changed to "INACTIVE".
+GET http://localhost:8080/api/team/juniors-overview
+Authorization: {{lawyer_token}}
+
+
+### =================================================================
+### 5. Activate the Junior Again (PUT /api/team/users/{id}/status)
+### =================================================================
+# Let's change the status back to ACTIVE.
+PUT http://localhost:8080/api/team/users/{{junior_id_to_manage}}/status
+Content-Type: application/json
+Authorization: {{lawyer_token}}
+
+{
+  "newStatus": "ACTIVE"
+}
+
+
+### =================================================================
+### 6. Set/Update Junior's Salary (PUT /api/team/juniors/{id}/salary)
+### =================================================================
+# This request sets the monthly salary for the junior specified.
+# If you run it again with a different value, it will update it.
+PUT http://localhost:8080/api/team/juniors/{{junior_id_to_manage}}/salary
+Content-Type: application/json
+Authorization: {{lawyer_token}}
+
+{
+  "newMonthlySalary": 6700.00
+}
+
+
+### =================================================================
+### 7. Verify Salary Update
+### =================================================================
+# Run the "Get Junior Lawyers Overview" again. The junior you updated
+# should now have the "monthlySalary" field set to 6700.00.
+GET http://localhost:8080/api/team/juniors-overview
+Authorization: {{lawyer_token}}
+
+
+### =================================================================
+### 8. Record a Salary Payment (POST /api/team/juniors/{id}/payments)
+### =================================================================
+# This creates a historical record that a payment was made.
+# The `paymentDate` is for which month/day the salary is for.
+POST http://localhost:8080/api/team/juniors/{{junior_id_to_manage}}/payments
+Content-Type: application/json
+Authorization: {{lawyer_token}}
+
+{
+  "amountPaid": 6700.00,
+  "paymentDate": "2025-10-31",
+  "notes": "October salary payment."
+}
+
+
+### =================================================================
+### 9. Get Detailed View for a Junior (GET /api/team/users/{id}/details)
+### =================================================================
+# This simulates clicking the "View" button for a junior.
+# The response should include the junior's basic info AND a list of cases
+# they are assigned to.
+
+GET http://localhost:8080/api/team/users/{{junior_id_to_manage}}/details
+Authorization: {{lawyer_token}}
+
+
+### =================================================================
+### 10. Get Detailed View for a Client (GET /api/team/users/{id}/details)
+### =================================================================
+# This simulates clicking the "View" button for a client.
+# The response should include the client's basic info AND a list of cases
+# they are assigned to.
+
+GET http://localhost:8080/api/team/users/{{client_id_to_manage}}/details
+Authorization: {{lawyer_token}}
+
+
+### =================================================================
+### 11. Test Failure Case: Junior Tries to Access Team Info
+### =================================================================
+# !! IMPORTANT !!
+# For this test, you need a token from a regular JUNIOR user.
+# This request is EXPECTED TO FAIL with a 403 Forbidden status because
+# the entire /api/team/** path is protected by @PreAuthorize("hasRole('LAWYER')").
+#
+### !! ACTION !! Create a @junior_token variable and paste a junior's token.
+@junior_token = Bearer eyJhbGciOi...[your junior token here]...
+
+GET http://localhost:8080/api/team/juniors-overview
+Authorization: {{junior_token}}

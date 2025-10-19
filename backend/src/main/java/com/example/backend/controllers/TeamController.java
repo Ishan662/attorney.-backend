@@ -1,16 +1,16 @@
 // >> In a NEW file: controllers/TeamController.java
 package com.example.backend.controllers;
 
+import com.example.backend.dto.team.*;
 import com.example.backend.dto.userDTO.UserDTO; // Make sure your UserDTO path is correct
 import com.example.backend.service.TeamService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/team") // All requests to /api/team will come here
@@ -34,4 +34,50 @@ public class TeamController {
         List<UserDTO> juniors = teamService.getJuniorsForCurrentFirm();
         return ResponseEntity.ok(juniors);
     }
+
+    // --- NEW ENDPOINTS ---
+
+    /**
+     * Activates or Deactivates any user (Junior or Client) in the lawyer's firm.
+     */
+    @PutMapping("/users/{userId}/status")
+    public ResponseEntity<Void> updateUserStatus(@PathVariable UUID userId, @RequestBody UpdateUserStatusRequestDTO request) {
+        teamService.updateUserStatus(userId, request);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Sets or updates the monthly salary for a specific Junior.
+     */
+    @PutMapping("/juniors/{juniorId}/salary")
+    public ResponseEntity<Void> updateJuniorSalary(@PathVariable UUID juniorId, @RequestBody UpdateSalaryRequestDTO request) {
+        teamService.updateJuniorSalary(juniorId, request);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Records that a salary payment was made to a Junior.
+     */
+    @PostMapping("/juniors/{juniorId}/payments")
+    public ResponseEntity<Void> recordSalaryPayment(@PathVariable UUID juniorId, @RequestBody RecordSalaryPaymentRequestDTO request) {
+        teamService.recordSalaryPayment(juniorId, request);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/juniors-overview")
+    public ResponseEntity<List<JuniorLawyerOverviewDTO>> getJuniorsOverview() {
+        return ResponseEntity.ok(teamService.getJuniorsOverview());
+    }
+
+    @GetMapping("/clients-overview")
+    public ResponseEntity<List<ClientOverviewDTO>> getClientsOverview() {
+        return ResponseEntity.ok(teamService.getClientsOverview());
+    }
+
+    @GetMapping("/users/{userId}/details")
+    public ResponseEntity<UserDetailDTO> getUserDetails(@PathVariable UUID userId) {
+        return ResponseEntity.ok(teamService.getUserDetails(userId));
+    }
+
+
 }
