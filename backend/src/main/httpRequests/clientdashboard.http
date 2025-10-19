@@ -1,0 +1,97 @@
+###=================================================================
+###Client Dashboard - Test File
+###=================================================================
+
+#File-level variables for authentication tokens.
+#!! IMPORTANT !!
+#Replace these placeholders with REAL, valid Firebase ID Tokens.
+#Get a token from a logged-in CLIENT user.
+
+@auth_token = Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IjlkMjEzMGZlZjAyNTg3ZmQ4ODYxODg2OTgyMjczNGVmNzZhMTExNjUiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vYXR0b3JuZXktY2hhdCIsImF1ZCI6ImF0dG9ybmV5LWNoYXQiLCJhdXRoX3RpbWUiOjE3NjA4NjA2MjAsInVzZXJfaWQiOiJUclJIR1dUWmxsZklUN2JxY0s1c2N5eHhkZjQzIiwic3ViIjoiVHJSSEdXVFpsbGZJVDdicWNLNXNjeXh4ZGY0MyIsImlhdCI6MTc2MDg2MDYyMCwiZXhwIjoxNzYwODY0MjIwLCJlbWFpbCI6InNkYXJzaGFuYXVuaS4yMUBnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiZmlyZWJhc2UiOnsiaWRlbnRpdGllcyI6eyJlbWFpbCI6WyJzZGFyc2hhbmF1bmkuMjFAZ21haWwuY29tIl19LCJzaWduX2luX3Byb3ZpZGVyIjoicGFzc3dvcmQifX0.U0oba0C9r386V5Ibtb1Zl2sNxELP_HYUL4W-z_KXZ5-YthOY7X-tR5mkVFL_pzocIP_pBWdszvROrLid8snc1NHiiJqEINnKiEbKhFOhYpqUVRzapMTCX7YmK5PARbMjVLP1bp7_uCqY_EtJIGMBXAx-assm5mr5jfRzqr4PQhXuMFRFF1XKQQz4xRW-7PikbVdSorRH4BloEVsfjR-Jt5fCU7q4ffLw8OPcKCtLm6GW8i_KKirtheaTVjnE69IwBOccJ9cJFUijXF_zjimM6HBA0ULRtTX1okbaJsTK_vuEaAx7aK1yQBPyDaslyE5TsDK9WJUr6zq9fqGstayW0g
+#File-level variables
+
+@client_token = {{auth_token}}
+@api_base = http://localhost:8080/api
+
+@client_user_id = 123e4567-e89b-12d3-a456-426614174000
+
+###=================================================================
+###1. Fetch Upcoming Cases for Client
+###=================================================================
+###Fetches all upcoming hearings/cases for the client.
+
+GET {{api_base}}/client-dashboard/upcoming-cases/{{client_user_id}}
+Authorization: {{client_token}}
+
+Expected Response:
+[
+{
+"id": "case-uuid",
+"caseTitle": "Johnson v Smith",
+"caseType": "Civil",
+"caseNumber": "2024/CIV/001",
+"description": "Contract dispute",
+"courtName": "Supreme Court",
+"courtType": "High",
+"clientName": "John Doe",
+"clientPhone": "+123456789",
+"clientEmail": "client@example.com
+",
+"opposingPartyName": "Jane Smith",
+"status": "OPEN",
+"paymentStatus": "PAID",
+"agreedFee": 1000,
+"createdAt": "2024-01-01T10:00:00Z",
+"updatedAt": "2024-01-05T12:00:00Z",
+"nextHearing": "2024-12-15T09:00:00Z"
+}
+]
+###=================================================================
+###2. Fetch Upcoming Meetings for Client
+###=================================================================
+###Fetches all upcoming meeting requests for the client.
+
+GET {{api_base}}/client-dashboard/upcoming-meetings/{{client_user_id}}
+Authorization: {{client_token}}
+
+
+{
+"id": 1,
+"title": "Strategy Meeting",
+"description": "Discuss contract strategy",
+"meetingDate": "2024-12-10",
+"startTime": "10:00:00",
+"endTime": "11:00:00",
+"status": "PENDING",
+"createdBy": "lawyer-uuid",
+"createdAt": "2024-11-01T09:00:00Z",
+"updatedAt": "2024-11-01T09:15:00Z"
+}
+
+###=================================================================
+###3. Test Failure: Invalid Client UUID
+###=================================================================
+###Should return 404 Not Found or empty list
+
+GET {{api_base}}/client-dashboard/upcoming-cases/00000000-0000-0000-0000-000000000000
+Authorization: {{client_token}}
+
+GET {{api_base}}/client-dashboard/upcoming-meetings/00000000-0000-0000-0000-000000000000
+Authorization: {{client_token}}
+
+###=================================================================
+###4. Test Failure: Missing/Invalid Token
+###=================================================================
+###Should return 401 Unauthorized
+
+GET {{api_base}}/client-dashboard/upcoming-cases/{{client_user_id}}
+
+GET {{api_base}}/client-dashboard/upcoming-meetings/{{client_user_id}}
+
+###=================================================================
+###Notes
+###=================================================================
+#- These requests can be imported into Postman or REST clients.
+#- Update the @client_user_id variable according to your test data.
+#- You can capture IDs like nextHearing or meetingId for additional automated tests.
+#- These endpoints are protected with @PreAuthorize("isAuthenticated()").
