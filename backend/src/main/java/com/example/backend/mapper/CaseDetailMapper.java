@@ -45,6 +45,8 @@ public class CaseDetailMapper {
         dto.setAgreedFee(entity.getAgreedFee());
         dto.setPaymentStatus(entity.getPaymentStatus());
 
+        dto.setAdditionalDetails(entity.getDetails());
+
         // Find and set the name of an assigned junior
         Optional<String> juniorName = entity.getMembers().stream()
                 .filter(member -> member.getUser().getRole() == AppRole.JUNIOR)

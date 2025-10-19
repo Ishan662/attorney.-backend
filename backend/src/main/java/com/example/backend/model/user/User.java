@@ -60,6 +60,9 @@ public class User {
     @Column(nullable = false)
     private UserStatus status = UserStatus.PENDING_INVITATION;
 
+    @Column(unique = true)
+    private String stripeCustomerId;
+
 
     @Column(nullable = false)
     private Instant createdAt = Instant.now();
@@ -152,4 +155,8 @@ public class User {
     public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
     }
+
+    public String getStripeCustomerId() { return stripeCustomerId; }
+
+    public void setStripeCustomerId(String stripeCustomerId) { this.stripeCustomerId = stripeCustomerId; }
 }

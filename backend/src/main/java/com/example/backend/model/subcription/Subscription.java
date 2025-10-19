@@ -32,6 +32,8 @@ public class Subscription {
     @JoinColumn(name = "user_id")
     private User user;
 
+    private String stripeSubscriptionId;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "plan_id", nullable = false)
     private SubscriptionPlan plan;
@@ -63,4 +65,6 @@ public class Subscription {
     public void setStatus(SubscriptionStatus status) { this.status = status; }
     public Instant getEndDate() { return endDate; }
     public void setEndDate(Instant endDate) { this.endDate = endDate; }
+    public String getStripeSubscriptionId() { return stripeSubscriptionId; }
+    public void setStripeSubscriptionId(String stripeSubscriptionId) { this.stripeSubscriptionId = stripeSubscriptionId; }
 }

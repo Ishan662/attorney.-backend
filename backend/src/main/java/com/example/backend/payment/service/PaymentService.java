@@ -81,4 +81,15 @@ public class PaymentService {
 
         return new PaymentResponseDto(session.getId(), session.getUrl());
     }
+
+    /**
+     * Retrieves the total amount paid for a specific case.
+     * @param caseId The UUID of the case.
+     * @return The total paid amount in the smallest currency unit (e.g., cents).
+     */
+    public Long getTotalPaidForCase(UUID caseId) {
+        return paymentRepository.sumSuccessfulPaymentsByCaseId(caseId, PaymentStatus.SUCCESS);
+    }
+
+
 }

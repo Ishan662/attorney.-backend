@@ -1,11 +1,8 @@
 package com.example.backend.controllers;
 
-import com.example.backend.dto.caseDTOS.CaseDetailDTO;
-import com.example.backend.dto.caseDTOS.CreateCaseRequest;
-import com.example.backend.dto.caseDTOS.CaseResponseDTO;
+import com.example.backend.dto.caseDTOS.*;
 // --- ▲▲▲ IMPORT THE NEW, SPECIFIC DTOS ▲▲▲ ---
 
-import com.example.backend.dto.caseDTOS.UpdateCaseRequest;
 import com.example.backend.dto.chatDTOS.ChatChannelDTO;
 import com.example.backend.service.CaseService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -109,6 +106,16 @@ public class CaseController {
     public ResponseEntity<List<ChatChannelDTO>> getMyChatChannels() {
         List<ChatChannelDTO> chatChannels = caseService.getChatChannelsForCurrentUser();
         return ResponseEntity.ok(chatChannels);
+    }
+
+    @PutMapping("/{caseId}/additional-details")
+    @PreAuthorize("hasAnyRole('LAWYER', 'JUNIOR')") // Or just hasRole('LAWYER') if only lawyers can edit
+    public ResponseEntity<CaseDetailDTO> updateAdditionalDetails(
+            @PathVariable UUID caseId,
+            @RequestBody UpdateAdditionalDetailsRequestDTO request) {
+
+        CaseDetailDTO updatedCaseDetails = caseService.updateAdditionalDetails(caseId, request);
+        return ResponseEntity.ok(updatedCaseDetails);
     }
 
 }

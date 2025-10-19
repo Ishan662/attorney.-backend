@@ -7,9 +7,16 @@ import com.example.backend.model.cases.PaymentStatus;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public class CaseDetailDTO {
+    // --- NEW FIELD FOR DYNAMIC, TYPE-SPECIFIC DATA ---
+    private Map<String, Object> additionalDetails;
+
+    public Map<String, Object> getAdditionalDetails() { return additionalDetails; }
+    public void setAdditionalDetails(Map<String, Object> additionalDetails) { this.additionalDetails = additionalDetails; }
+
     // Core Details
     private UUID id;
     private String caseTitle;
