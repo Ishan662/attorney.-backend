@@ -32,4 +32,16 @@ public class SubscriptionController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    @DeleteMapping("/my-subscription")
+    public ResponseEntity<?> cancelSubscription() {
+        try {
+            subscriptionService.cancelSubscriptionForCurrentUser();
+            return ResponseEntity.ok(Map.of("message", "Subscription successfully canceled."));
+        } catch (StripeException e) {
+            return ResponseEntity.status(500).body("Error canceling subscription with Stripe: " + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 }
