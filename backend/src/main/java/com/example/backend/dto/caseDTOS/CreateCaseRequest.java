@@ -12,6 +12,16 @@ import java.util.UUID;
  */
 public class CreateCaseRequest {
 
+    private UUID existingClientId;
+
+    public UUID getExistingClientId() {
+        return existingClientId;
+    }
+
+    public void setExistingClientId(UUID existingClientId) {
+        this.existingClientId = existingClientId;
+    }
+
     // --- Parties Involved ---
     private String clientName;
     private String clientPhone;

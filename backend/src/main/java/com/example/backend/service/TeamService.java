@@ -240,5 +240,23 @@ public class TeamService {
         return dto;
     }
 
+    @Transactional(readOnly = true)
+    public List<TeamMemberSelectDTO> getTeamMembersForSelection(AppRole role) {
+        User lawyer = getCurrentLawyer();
+
+        // Find all users in the firm with the specified role who are active
+        List<User> users = userRepository.findByFirmIdAndRole(lawyer.getFirm().getId(), role);
+
+        // Map them to the new lightweight DTO
+        return users.stream().map(user -> {
+            TeamMemberSelectDTO dto = new TeamMemberSelectDTO();
+            dto.setId(user.getId());
+            dto.setFirstName(user.getFirstName());
+            dto.setLastName(user.getLastName());
+            dto.setEmail(user.getEmail());
+            return dto;
+        }).collect(Collectors.toList());
+    }
+
 
 }

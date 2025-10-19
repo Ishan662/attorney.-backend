@@ -3,6 +3,7 @@ package com.example.backend.controllers;
 
 import com.example.backend.dto.team.*;
 import com.example.backend.dto.userDTO.UserDTO; // Make sure your UserDTO path is correct
+import com.example.backend.model.AppRole;
 import com.example.backend.service.TeamService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -77,6 +78,22 @@ public class TeamController {
     @GetMapping("/users/{userId}/details")
     public ResponseEntity<UserDetailDTO> getUserDetails(@PathVariable UUID userId) {
         return ResponseEntity.ok(teamService.getUserDetails(userId));
+    }
+
+    @GetMapping("/juniors/select-list")
+    public ResponseEntity<List<TeamMemberSelectDTO>> getJuniorsForSelection() {
+        List<TeamMemberSelectDTO> juniors = teamService.getTeamMembersForSelection(AppRole.JUNIOR);
+        return ResponseEntity.ok(juniors);
+    }
+
+    /**
+     * Gets a lightweight list of all CLIENTS in the firm, optimized for populating
+     * the "Choose from existing clients" dropdown during case creation.
+     */
+    @GetMapping("/clients/select-list")
+    public ResponseEntity<List<TeamMemberSelectDTO>> getClientsForSelection() {
+        List<TeamMemberSelectDTO> clients = teamService.getTeamMembersForSelection(AppRole.CLIENT);
+        return ResponseEntity.ok(clients);
     }
 
 

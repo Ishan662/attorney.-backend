@@ -27,6 +27,7 @@ import com.example.backend.repositories.CaseMemberRepository;
 
 // Other imports...
 import com.example.backend.service.FirebaseChat.FirebaseChatService;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.AccessDeniedException;
@@ -83,10 +84,37 @@ public class CaseService {
         newCase.setFirm(lawyer.getFirm());
         newCase.setCreatedBy(lawyer);
 
-        // Map all fields directly from the DTO.
-        newCase.setClientName(request.getClientName());
-        newCase.setClientPhone(request.getClientPhone());
-        newCase.setClientEmail(request.getClientEmail());
+        // This list will hold all users who need to be members from the start.
+        List<User> initialMembers = new ArrayList<>();
+        initialMembers.add(lawyer); // The lawyer is always a member.
+
+        // 3. --- NEW & CORRECTED CLIENT HANDLING LOGIC ---
+        if (request.getExistingClientId() != null) {
+            // SCENARIO A: An existing client was selected from the dropdown.
+            User clientUser = userRepository.findById(request.getExistingClientId())
+                    .orElseThrow(() -> new EntityNotFoundException("Selected existing client not found."));
+
+            // Security check: ensure the selected client is in the lawyer's firm.
+            if (!clientUser.getFirm().getId().equals(lawyer.getFirm().getId())) {
+                throw new SecurityException("Cannot associate a client from another firm.");
+            }
+
+            // Populate the case with the existing client's verified details.
+            newCase.setClientName(clientUser.getFirstName() + " " + clientUser.getLastName());
+            newCase.setClientPhone(clientUser.getPhoneNumber());
+            newCase.setClientEmail(clientUser.getEmail());
+
+            // Add this user to the list for membership and chat.
+            initialMembers.add(clientUser);
+
+        } else {
+            // SCENARIO B: A new client's details were entered as plain text.
+            // The workflow is to just record the details on the case. No User is created.
+            newCase.setClientName(request.getClientName());
+            newCase.setClientPhone(request.getClientPhone());
+            newCase.setClientEmail(request.getClientEmail());
+        }
+
         newCase.setOpposingPartyName(request.getOpposingPartyName());
 
 
@@ -128,6 +156,17 @@ public class CaseService {
             initialHearing.setLocation(request.getCourt());
             initialHearing.setLawyer(lawyer);
             hearingRepository.save(initialHearing);
+        }
+
+        // 6. Associate the initial Junior, if provided.
+        if (request.getAssociatedJuniorId() != null) {
+            User juniorUser = userRepository.findById(request.getAssociatedJuniorId())
+                    .orElseThrow(() -> new IllegalArgumentException("Associated junior not found."));
+
+            if (!juniorUser.getFirm().getId().equals(lawyer.getFirm().getId())) {
+                throw new SecurityException("Cannot assign a junior from another firm.");
+            }
+            initialMembers.add(juniorUser);
         }
 
         // ==========================================================
