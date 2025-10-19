@@ -22,6 +22,9 @@ public class Firm {
     @Column(nullable = false)
     private String firmName;
 
+    @Column(unique = true)
+    private String stripeCustomerId;
+
     @Column(nullable = false)
     private Instant createdAt = Instant.now();
 
@@ -32,4 +35,6 @@ public class Firm {
     public void setFirmName(String firmName) { this.firmName = firmName; }
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+    public String getStripeCustomerId() { return stripeCustomerId; }
+    public void setStripeCustomerId(String stripeCustomerId) { this.stripeCustomerId = stripeCustomerId; }
 }

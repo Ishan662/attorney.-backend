@@ -4,6 +4,7 @@ import com.example.backend.model.cases.PaymentStatus; // Ensure this import is c
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -11,6 +12,22 @@ import java.util.UUID;
  * directly matches the fields on the "Create Case" form in the UI.
  */
 public class CreateCaseRequest {
+
+    // --- NEW FIELD FOR DYNAMIC, TYPE-SPECIFIC DATA ---
+    private Map<String, Object> additionalDetails;
+
+    public Map<String, Object> getAdditionalDetails() { return additionalDetails; }
+    public void setAdditionalDetails(Map<String, Object> additionalDetails) { this.additionalDetails = additionalDetails; }
+
+    private UUID existingClientId;
+
+    public UUID getExistingClientId() {
+        return existingClientId;
+    }
+
+    public void setExistingClientId(UUID existingClientId) {
+        this.existingClientId = existingClientId;
+    }
 
     // --- Parties Involved ---
     private String clientName;

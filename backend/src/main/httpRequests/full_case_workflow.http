@@ -1,0 +1,166 @@
+### =================================================================
+### Full Case & Member Association Workflow - Test File
+### =================================================================
+
+### File-level variables for authentication tokens and IDs.
+### !! IMPORTANT !!
+### Replace placeholder tokens with REAL, valid Firebase ID Tokens.
+@lawyer_token = Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IjlkMjEzMGZlZjAyNTg3ZmQ4ODYxODg2OTgyMjczNGVmNzZhMTExNjUiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vYXR0b3JuZXktNDU4NjIiLCJhdWQiOiJhdHRvcm5leS00NTg2MiIsImF1dGhfdGltZSI6MTc2MDg0NTE1MSwidXNlcl9pZCI6IlQwVjF5RjV2UUFoTDVlWmt0OTNGVFdCYjlwTjIiLCJzdWIiOiJUMFYxeUY1dlFBaEw1ZVprdDkzRlRXQmI5cE4yIiwiaWF0IjoxNzYwODQ1MTUxLCJleHAiOjE3NjA4NDg3NTEsImVtYWlsIjoiZGFyc2hhbmEyMDIxc3VqYW5AZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImZpcmViYXNlIjp7ImlkZW50aXRpZXMiOnsiZW1haWwiOlsiZGFyc2hhbmEyMDIxc3VqYW5AZ21haWwuY29tIl19LCJzaWduX2luX3Byb3ZpZGVyIjoicGFzc3dvcmQifX0.PWiLoAXV-8NCCHsQ1IwBzGyfwTAU72iKwIbP0us-apS0zQ_KVkERyN7_bQDolTlDQPh3FZmZCePTrUx2EwkFdctNRWe6JiXLOIXc8EOHERj89sXTNYki71dbkhvpgebGZvuELjNO-IMVyX1nnB93MKURhbXrlpMXkMZXSw0Ldo0EdtrOeo2yX2T9pA1vJSlFqwa_WftJQaeFZBRMxIlds9N6-cthOxBwD1jkjqSUC6sQp79q7RUK5MyytEVToB8rpF6iO-e_GrqSEjctfBdPlmccBZLfEgSO5pNcYbDfoVGxKMZm7xqRgBlJdfQrXghIsJfb4jc-LiSfOyozoUdyeQ
+
+
+
+@junior_token = Bearer eyJhbGciOi...[your junior token here]...
+
+### !! ACTION !!
+### After running the "Get..." requests, manually copy the UUIDs from the
+### response bodies into the variables below.
+@existing_client_id_to_assign = a0147adc-330d-450b-92ef-486ac38e9583
+@junior_id_to_assign = 903c0e4d-a00e-42ad-970e-11f2f4cc8000
+@another_junior_id_to_associate =
+
+### File-level variable to hold the ID of the newly created case.
+### This will be set automatically by the script after the create case request.
+@created_case_id = 2e1ae5d3-1198-4a7e-a8d8-5c5aead7d727
+
+
+### =================================================================
+### SETUP PHASE: Get a list of available Clients and Juniors
+### =================================================================
+
+### 1. AS LAWYER: Get Client List for Selection Dropdown
+### =================================================================
+# Tests the new lightweight endpoint for populating the "Existing Clients" dropdown.
+#
+# >> ACTION: Copy the "id" of any client from the response and paste it
+# >>         into the @existing_client_id_to_assign variable above.
+GET http://localhost:8080/api/team/clients/select-list
+Authorization: {{lawyer_token}}
+
+###
+#result [
+#{
+#    "id": "a0147adc-330d-450b-92ef-486ac38e9583",
+#    "firstName": "John",
+#    "lastName": "Doe",
+#    "email": "hezelrobertzon21@gmail.com"
+#  }
+#]
+###
+
+
+### 2. AS LAWYER: Get Junior List for Selection Dropdown
+### =================================================================
+# Tests the new lightweight endpoint for populating the "Associate Junior" dropdown.
+#
+# >> ACTION: Copy the "id" of TWO different juniors from the response.
+# >>         Paste the first into @junior_id_to_assign.
+# >>         Paste the second into @another_junior_id_to_associate.
+GET http://localhost:8080/api/team/juniors/select-list
+Authorization: {{lawyer_token}}
+
+###
+#result
+#    [
+#{
+#    "id": "903c0e4d-a00e-42ad-970e-11f2f4cc8000",
+#    "firstName": "VPN",
+#    "lastName": "Hansika",
+#    "email": "naduni2311@gmail.com"
+#  }
+#]
+
+###
+
+### =================================================================
+### CASE CREATION PHASE: Create a case with the selected users
+### =================================================================
+
+### 3. AS LAWYER: Create a New Case with Existing Client & One Junior
+### =================================================================
+# This is the main test for your enhanced createCase method.
+# It uses the IDs you just copied to associate an existing client and a junior.
+#
+# @name createCase
+POST http://localhost:8080/api/cases
+Content-Type: application/json
+Authorization: {{lawyer_token}}
+
+{
+  "existingClientId": "{{existing_client_id_to_assign}}",
+  "associatedJuniorId": "{{junior_id_to_assign}}",
+  "opposingPartyName": "Global Corp Inc.",
+  "caseNumber": "DC-COL-1025-2025",
+  "court": "District Court",
+  "courtType": "Civil",
+  "initialHearingDate": "2025-11-15",
+  "description": "Breach of contract dispute regarding the delivery of goods.",
+  "caseType": "Commercial Law",
+  "agreedFee": 15000.00,
+  "paymentStatus": "NOT_INVOICED"
+}
+
+
+### =================================================================
+### 4. Auto-set the created_case_id variable
+### =================================================================
+# This script runs automatically after the "createCase" request succeeds.
+# It grabs the ID of the newly created case for use in later requests.
+> {%
+client.global.set("created_case_id", response.body);
+%}
+
+
+### =================================================================
+### POST-CREATION MANAGEMENT PHASE: View and modify the case
+### =================================================================
+
+### 5. AS LAWYER: Get Detailed View of the New Case
+### =================================================================
+# Tests the `GET /api/cases/{caseId}` endpoint.
+# The response should be a rich `CaseDetailDTO` that includes a "members" list.
+# Verify that the Lawyer, the Client, and the Junior you selected all appear
+# in the "members" list in the response body.
+GET http://localhost:8080/api/cases/{{created_case_id}}
+Authorization: {{lawyer_token}}
+
+
+
+
+### =================================================================
+### 7. AS LAWYER: Verify the New Member was Added
+### =================================================================
+# Run the "Get Detailed View" request again.
+# The "members" list in the response should now contain FOUR people:
+# The Lawyer, the Client, Junior #1, and Junior #2.
+GET http://localhost:8080/api/cases/{{created_case_id}}
+Authorization: {{lawyer_token}}
+
+
+### =================================================================
+### 8. AS JUNIOR: Verify Access to the Case
+### =================================================================
+# This tests that a junior who is a member of the case can also view its details.
+# This should succeed with a 200 OK.
+GET http://localhost:8080/api/cases/{{created_case_id}}
+Authorization: {{junior_token}}
+
+
+### =================================================================
+### 9. Test Failure Case: Creating a Case with a Cross-Firm Junior
+### =================================================================
+# This request is designed to fail to test your security.
+# >> ACTION: Manually find the ID of a junior from a DIFFERENT firm and
+# >>         paste it into the `associatedJuniorId` field below.
+# This request is EXPECTED TO FAIL with a 403 Forbidden or similar error.
+POST http://localhost:8080/api/cases
+Content-Type: application/json
+Authorization: {{lawyer_token}}
+
+{
+  "existingClientId": "{{existing_client_id_to_assign}}",
+  "associatedJuniorId": "UUID_OF_JUNIOR_FROM_ANOTHER_FIRM",
+  "opposingPartyName": "Test Should Fail",
+  "caseNumber": "FAIL-TEST-001",
+  "court": "Test Court",
+  "caseType": "Test"
+}
