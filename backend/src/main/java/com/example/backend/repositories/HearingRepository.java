@@ -27,4 +27,15 @@ public interface HearingRepository extends JpaRepository<Hearing, UUID> {
     @Query("SELECT h FROM Hearing h WHERE h.lawyer.id = :lawyerId ORDER BY h.startTime ASC")
     List<Hearing> findAllByLawyerId(@Param("lawyerId") UUID lawyerId);
 
+    @Query("""
+        SELECT h 
+        FROM Hearing h
+        JOIN h.aCase c
+        JOIN c.members m
+        WHERE m.user.id = :clientId
+          AND h.hearingDate > CURRENT_TIMESTAMP
+        ORDER BY h.hearingDate ASC
+    """)
+    List<Hearing> findUpcomingHearingsByClientId(@Param("clientId") UUID clientId);
+
 }

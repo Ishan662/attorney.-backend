@@ -90,4 +90,6 @@ public class PaymentService {
     public Long getTotalPaidForCase(UUID caseId) {
         return paymentRepository.sumSuccessfulPaymentsByCaseId(caseId, PaymentStatus.SUCCESS);
     }
+
+
 }
