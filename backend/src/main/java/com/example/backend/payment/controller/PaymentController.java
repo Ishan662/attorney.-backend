@@ -10,9 +10,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/api/payments")
-@CrossOrigin(origins = "http://localhost:5173") // adjust if needed
+@CrossOrigin(origins = "http://localhost:5173")
 public class PaymentController {
 
     private final PaymentService paymentService;
@@ -38,6 +41,18 @@ public class PaymentController {
             return ResponseEntity
                     .internalServerError()
                     .body("An unexpected error occurred. Please try again later.");
+        }
+    }
+
+    @GetMapping("/total-paid/{caseId}")
+    public ResponseEntity<?> getTotalPaidAmount(@PathVariable UUID caseId) {
+        try {
+            Long totalPaid = paymentService.getTotalPaidForCase(caseId);
+            // We return the amount in a simple JSON object: { "totalPaidAmount": 5000 }
+            return ResponseEntity.ok(Map.of("totalPaidAmount", totalPaid));
+        } catch (Exception e) {
+            // Basic error handling
+            return ResponseEntity.internalServerError().body("Error retrieving total paid amount.");
         }
     }
 }
