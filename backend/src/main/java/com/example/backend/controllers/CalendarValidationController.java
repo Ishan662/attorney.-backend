@@ -11,6 +11,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -32,21 +35,30 @@ public class CalendarValidationController {
     }
 
     /**
+     * Convert Instant to LocalDateTime using system default timezone
+     */
+    private LocalDateTime toLocalDateTime(Instant instant) {
+        return instant != null ? LocalDateTime.ofInstant(instant, ZoneId.systemDefault()) : null;
+    }
+
+    /**
      * Validate a new hearing before creating it
      */
     @PostMapping("/validate/hearing")
     @PreAuthorize("hasAnyRole('LAWYER','JUNIOR')")
     public ResponseEntity<Map<String, Object>> validateHearing(@RequestBody CreateHearingDto hearingDto) {
-        User currentUser = hearingService.getCurrentUser(); // helper in service
+        User currentUser = hearingService.getCurrentUser();
+
+        LocalDateTime startTime = toLocalDateTime(hearingDto.getStartTime());
+        LocalDateTime endTime = toLocalDateTime(hearingDto.getEndTime());
 
         ValidationResult result = calendarValidationService.validateNewHearingWithTasks(
-                hearingDto.getStartTime(),
-                hearingDto.getEndTime(),
+                startTime,
+                endTime,
                 hearingDto.getLocation(),
                 currentUser
         );
 
-        // convert ValidationResult to JSON map
         Map<String, Object> response = new HashMap<>();
         response.put("valid", result.isValid());
         response.put("message", result.getMessage());
@@ -54,6 +66,14 @@ public class CalendarValidationController {
         response.put("travelText", result.getTravelText());
 
         return ResponseEntity.ok(response);
+
+
+    }
+    private LocalDateTime toLocalDateTime(Object obj) {
+        if (obj == null) return null;
+        if (obj instanceof Instant instant) return LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
+        if (obj instanceof LocalDateTime ldt) return ldt;
+        throw new IllegalArgumentException("Unsupported date type: " + obj.getClass());
     }
 
     /**
@@ -62,11 +82,14 @@ public class CalendarValidationController {
     @PostMapping("/validate/task")
     @PreAuthorize("hasAnyRole('LAWYER','JUNIOR')")
     public ResponseEntity<Map<String, Object>> validateTask(@RequestBody CalendarTaskRequestDTO taskDto) {
-        User currentUser = calendarTaskService.getCurrentUser(); // helper in service
+        User currentUser = calendarTaskService.getCurrentUser();
+
+        LocalDateTime startTime = toLocalDateTime(taskDto.getStartTime());
+        LocalDateTime endTime = toLocalDateTime(taskDto.getEndTime());
 
         ValidationResult result = calendarValidationService.validateNewTaskWithHearings(
-                taskDto.getStartTime(),
-                taskDto.getEndTime(),
+                startTime,
+                endTime,
                 taskDto.getLocation(),
                 currentUser
         );

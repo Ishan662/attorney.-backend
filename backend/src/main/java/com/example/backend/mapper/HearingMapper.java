@@ -6,6 +6,8 @@ import com.example.backend.dto.hearingDTOS.UpdateHearingDto;
 import com.example.backend.model.hearing.Hearing;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -42,8 +44,12 @@ public class HearingMapper {
         Hearing hearing = new Hearing();
         hearing.setTitle(dto.getTitle());
         hearing.setHearingDate(dto.getHearingDate());
-        hearing.setStartTime(dto.getStartTime());
-        hearing.setEndTime(dto.getEndTime());
+        if (dto.getStartTime() != null) {
+            hearing.setStartTime(LocalDateTime.ofInstant(dto.getStartTime(), ZoneId.systemDefault()));
+        }
+        if (dto.getEndTime() != null) {
+            hearing.setEndTime(LocalDateTime.ofInstant(dto.getEndTime(), ZoneId.systemDefault()));
+        }
         hearing.setLocation(dto.getLocation());
         hearing.setNote(dto.getNote());
         return hearing;
