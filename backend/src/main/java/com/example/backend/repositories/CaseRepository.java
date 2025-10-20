@@ -118,6 +118,28 @@ public interface CaseRepository extends JpaRepository<Case, UUID>, CaseRepositor
             @Param("endDate") Instant endDate
     );
 
+    @Query("SELECT c FROM Case c " +
+            "WHERE c.createdBy.id = :lawyerId " +
+            "AND c.status = :status " +
+            "AND c.updatedAt BETWEEN :startOfDay AND :endOfDay")
+    List<Case> findClosedCasesForLawyerOnDate(
+            @Param("lawyerId") UUID lawyerId,
+            @Param("status") CaseStatus status,
+            @Param("startOfDay") Instant startOfDay,
+            @Param("endOfDay") Instant endOfDay
+    );
+
+    @Query("SELECT c FROM Case c " +
+            "WHERE c.createdBy.id = :lawyerId " +
+            "AND c.status = :status " +
+            "AND c.updatedAt BETWEEN :startOfDay AND :endOfDay")
+    List<Case> findOpenedCasesForLawyerOnDate(
+            @Param("lawyerId") UUID lawyerId,
+            @Param("status") CaseStatus status,
+            @Param("startOfDay") Instant startOfDay,
+            @Param("endOfDay") Instant endOfDay
+    );
+
 //    @Query("SELECT DISTINCT c FROM Case c LEFT JOIN c.hearings h " +
 //            "WHERE c.firm.id = :firmId " +
 //            "AND (:searchTerm IS NULL OR " +
