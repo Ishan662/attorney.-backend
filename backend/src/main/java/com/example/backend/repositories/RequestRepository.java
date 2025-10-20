@@ -37,4 +37,6 @@ public interface RequestRepository extends JpaRepository<Request, UUID> {
             @Param("date") LocalDate date,
             @Param("startTime") LocalTime startTime,
             @Param("endTime") LocalTime endTime);
+
+    List<Request> findAllByRequestedLawyerId(UUID lawyerId);
 }
