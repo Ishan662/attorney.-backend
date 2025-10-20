@@ -1,6 +1,8 @@
 package com.example.backend.controllers.subscription;
 
 import com.example.backend.dto.subscription.CreateSubscriptionRequestDto;
+import com.example.backend.dto.subscription.SubscriptionResponseDto;
+import com.example.backend.model.subcription.Subscription;
 import com.example.backend.service.SubscriptionService;
 import com.stripe.exception.StripeException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +42,17 @@ public class SubscriptionController {
             return ResponseEntity.ok(Map.of("message", "Subscription successfully canceled."));
         } catch (StripeException e) {
             return ResponseEntity.status(500).body("Error canceling subscription with Stripe: " + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/my-subscription")
+    public ResponseEntity<?> getMySubscription() {
+        try {
+            // The service now returns the safe DTO, not the entity
+            SubscriptionResponseDto subscriptionDto = subscriptionService.getSubscriptionForCurrentUser();
+            return ResponseEntity.ok(subscriptionDto);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

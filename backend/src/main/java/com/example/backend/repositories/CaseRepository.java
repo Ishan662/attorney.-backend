@@ -2,6 +2,7 @@ package com.example.backend.repositories;
 
 import com.example.backend.model.cases.Case;
 import com.example.backend.model.cases.CaseStatus;
+import com.example.backend.payment.dto.OverdueCaseDto;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -124,4 +125,11 @@ public interface CaseRepository extends JpaRepository<Case, UUID> {
 
     @Query("SELECT c FROM Case c JOIN c.members m WHERE m.user.id = :userId")
     List<Case> findCasesByUserId(@Param("userId") UUID userId);
+
+    @Query("SELECT new com.example.backend.payment.dto.OverdueCaseDto(" +
+            "c.id, c.caseTitle, c.clientName, c.clientEmail, c.caseNumber, c.courtName, c.createdAt, c.agreedFee, " +
+            "(SELECT COALESCE(SUM(p.amount), 0L) FROM Payment p WHERE p.caseEntity.id = c.id AND p.status = 'SUCCESS')) " +
+            "FROM Case c WHERE c.firm.id = :firmId AND c.createdAt < :cutoffDate " +
+            "AND (c.agreedFee * 100) > (SELECT COALESCE(SUM(p.amount), 0L) FROM Payment p WHERE p.caseEntity.id = c.id AND p.status = 'SUCCESS')")
+    List<OverdueCaseDto> findOverdueCasesByFirm(@Param("firmId") UUID firmId, @Param("cutoffDate") Instant cutoffDate);
 }

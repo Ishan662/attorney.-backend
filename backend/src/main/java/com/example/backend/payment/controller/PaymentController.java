@@ -1,5 +1,7 @@
 package com.example.backend.payment.controller;
 
+import com.example.backend.payment.dto.OverdueCaseDto;
+import com.example.backend.payment.dto.PaymentDetailDto;
 import com.example.backend.payment.dto.PaymentRequestDto;
 import com.example.backend.payment.dto.PaymentResponseDto;
 import com.example.backend.payment.service.PaymentService;
@@ -10,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -53,6 +56,43 @@ public class PaymentController {
         } catch (Exception e) {
             // Basic error handling
             return ResponseEntity.internalServerError().body("Error retrieving total paid amount.");
+        }
+    }
+
+    /**
+     * GET endpoint to retrieve all payments received by the current lawyer.
+     * @return A list of detailed payment information.
+     */
+    @GetMapping("/my-received-payments")
+    public ResponseEntity<List<PaymentDetailDto>> getPaymentsForLawyer() {
+        try {
+            List<PaymentDetailDto> payments = paymentService.getPaymentsForCurrentLawyer();
+            return ResponseEntity.ok(payments);
+        } catch (Exception e) {
+            logger.error("Error retrieving payments for lawyer", e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @GetMapping("/my-overdue-payments")
+    public ResponseEntity<List<OverdueCaseDto>> getOverduePaymentsForLawyer() {
+        try {
+            List<OverdueCaseDto> overdueCases = paymentService.getOverdueCasesForCurrentLawyer();
+            return ResponseEntity.ok(overdueCases);
+        } catch (Exception e) {
+            logger.error("Error retrieving overdue payments for lawyer", e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @PostMapping("/send-overdue-reminders")
+    public ResponseEntity<?> sendOverdueReminders() {
+        try {
+            paymentService.sendOverduePaymentReminders();
+            return ResponseEntity.ok(Map.of("message", "Reminder emails sent successfully."));
+        } catch (Exception e) {
+            logger.error("Failed to send reminder emails", e);
+            return ResponseEntity.internalServerError().body("An error occurred while sending reminders.");
         }
     }
 }
