@@ -228,4 +228,15 @@ public class AuthService {
             }
         }
     }
+
+    /**
+     * Retrieves the full User entity for the currently authenticated user.
+     * This is a helper method used by other services.
+     * @return The authenticated User entity.
+     */
+    public User getCurrentUser() {
+        String firebaseUid = SecurityContextHolder.getContext().getAuthentication().getName();
+        return userRepository.findByFirebaseUid(firebaseUid)
+                .orElseThrow(() -> new UsernameNotFoundException("Authenticated user not found in database with Firebase UID: " + firebaseUid));
+    }
 }
