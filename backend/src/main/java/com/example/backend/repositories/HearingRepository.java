@@ -38,4 +38,6 @@ public interface HearingRepository extends JpaRepository<Hearing, UUID> {
     """)
     List<Hearing> findUpcomingHearingsByClientId(@Param("clientId") UUID clientId);
 
+
+
 }
