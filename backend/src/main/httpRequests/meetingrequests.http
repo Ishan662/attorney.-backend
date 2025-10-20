@@ -1,0 +1,153 @@
+### =================================================================
+### Meeting Request Workflow - Test File
+### =================================================================
+
+### File-level variables for authentication tokens.
+### !! IMPORTANT !!
+### Replace these placeholders with REAL, valid Firebase ID Tokens.
+@lawyer_token = Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IjlkMjEzMGZlZjAyNTg3ZmQ4ODYxODg2OTgyMjczNGVmNzZhMTExNjUiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vYXR0b3JuZXktNDU4NjIiLCJhdWQiOiJhdHRvcm5leS00NTg2MiIsImF1dGhfdGltZSI6MTc2MDkzNTU4MiwidXNlcl9pZCI6IlQwVjF5RjV2UUFoTDVlWmt0OTNGVFdCYjlwTjIiLCJzdWIiOiJUMFYxeUY1dlFBaEw1ZVprdDkzRlRXQmI5cE4yIiwiaWF0IjoxNzYwOTM1NTgyLCJleHAiOjE3NjA5MzkxODIsImVtYWlsIjoiZGFyc2hhbmEyMDIxc3VqYW5AZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImZpcmViYXNlIjp7ImlkZW50aXRpZXMiOnsiZW1haWwiOlsiZGFyc2hhbmEyMDIxc3VqYW5AZ21haWwuY29tIl19LCJzaWduX2luX3Byb3ZpZGVyIjoicGFzc3dvcmQifX0.byD_1hHFFA3TmXtQf5niYIexi0xe4Ifh54U0OCwRxKIQnwmO3Rl56VBmraiF91d64_EtRSiRH1F67gb4yqZVyrwBIEDDhOr08Fe_uGIKaMS0RyIaUsXMHMOkoy0RK1jd1bOOGfnpF7tFG5zxXhp6A6SpNhf_8tyHRoLrOblr6g3a0Ej3YHgTDbX3gVrm9ecW--vEqPh-vt2An-gbvn34qSXgzwY8poC7X7g0RscKfz3NIFaOVGa73lS-IhKNjieMviawkY5jp2sjKmCwYPcQqlwWY3FM14w2hmo0dudbaQxkVonbe_L5b4ZTTNQtly1BYXpJ4PtKC5P4_9KGbTBvEA
+
+
+
+
+@client_token = Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IjlkMjEzMGZlZjAyNTg3ZmQ4ODYxODg2OTgyMjczNGVmNzZhMTExNjUiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vYXR0b3JuZXktNDU4NjIiLCJhdWQiOiJhdHRvcm5leS00NTg2MiIsImF1dGhfdGltZSI6MTc2MDkzNTY5MSwidXNlcl9pZCI6Imp0elRjZlp2OWpWSHFSY2UwZVRENmMyMDM2MjMiLCJzdWIiOiJqdHpUY2ZadjlqVkhxUmNlMGVURDZjMjAzNjIzIiwiaWF0IjoxNzYwOTM1NjkxLCJleHAiOjE3NjA5MzkyOTEsImVtYWlsIjoiaGV6ZWxyb2JlcnR6b24yMUBnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsImZpcmViYXNlIjp7ImlkZW50aXRpZXMiOnsiZW1haWwiOlsiaGV6ZWxyb2JlcnR6b24yMUBnbWFpbC5jb20iXX0sInNpZ25faW5fcHJvdmlkZXIiOiJwYXNzd29yZCJ9fQ.YUHeKe7YNiHZaXtz1nYsfkoAzmYsdMmRJziNMDWYK3jHcDCddevmbMeTx20WQ2grkrWR7Uughi3jBEQBrzza2u_y4-4S9RWqEuqX8vd_iHptKmk-ecqPWs1AGGHGDBfJcDE7ZsT3EwsM02mDeAa3WDs0Od12Hf2FdNWt5EkYUyMYoh3TpQNRhQxLuiJZJgqEIQ4DHTKqDhlgEDrKjqv_EbMsgIex9UWriS_JAJm0P0uDlRoCEptXdEU3PdLh-RZvTPzUDXcDiNbKe0Z8w7tHtAL-Mqurr6aC1L9mguJzJwENPa3uOLnFw7ukAHi5z4vVghkbfKtl8FspzqyUTH17_w
+
+
+
+### File-level variables to hold IDs.
+### The @case_id variable must be set manually.
+### The @created_meeting_id will be set automatically.
+
+### !! ACTION !!
+### Find the UUID of a case that the CLIENT (identified by @client_token) is a member of.
+### You can get this from your database or by calling GET /api/cases as the client.
+@case_id = 6b984d96-d790-47b5-b1dd-bb45ed723dcb
+
+@created_meeting_id = 998e115e-8e88-400a-8f15-a9280183e072
+
+
+### =================================================================
+### 1. AS CLIENT: Request a New Meeting
+### =================================================================
+# This simulates the client filling out the "Request Meeting" form.
+# It will FAIL with a 403 Forbidden if the client is not a member of the specified @case_id.
+# It will FAIL with a 500 or 400 error if the time slot is already booked.
+#
+# @name createMeeting
+POST http://localhost:8080/api/meetings
+Content-Type: application/json
+Authorization: {{client_token}}
+
+{
+  "caseId": "{{case_id}}",
+  "title": "Urgent Discussion on Case Strategy",
+  "meetingDate": "2025-11-25",
+  "startTime": "18:00:00",
+  "endTime": "19:00:00",
+  "note": "I would like to discuss the upcoming hearing."
+}
+
+
+### =================================================================
+### 2. Auto-set the created_meeting_id variable
+### =================================================================
+# This script runs automatically after the "createMeeting" request succeeds.
+> {%
+client.global.set("created_meeting_id", response.body.id);
+%}
+
+
+### =================================================================
+### 3. AS CLIENT: View My Meeting Requests
+### =================================================================
+# The client should see the "Urgent Discussion" meeting they just created,
+# with the status "PENDING".
+GET http://localhost:8080/api/meetings
+Authorization: {{client_token}}
+
+
+### =================================================================
+### 4. AS LAWYER: View My Incoming Meeting Requests
+### =================================================================
+# The lawyer should also see the "Urgent Discussion" meeting from the client,
+# with the status "PENDING".
+GET http://localhost:8080/api/meetings
+Authorization: {{lawyer_token}}
+
+
+### =================================================================
+### 5. AS LAWYER: Reschedule the Meeting
+### =================================================================
+# The lawyer is busy and proposes a new time for the meeting.
+# The status is changed to "RESCHEDULED" and new date/time are provided.
+# This will FAIL with a 403 Forbidden if a CLIENT tries to call it.
+PUT http://localhost:8080/api/meetings/{{created_meeting_id}}
+Content-Type: application/json
+Authorization: {{lawyer_token}}
+
+{
+  "newStatus": "RESCHEDULED",
+  "rescheduledDate": "2025-12-29",
+  "rescheduledStartTime": "10:00:00",
+  "rescheduledEndTime": "11:00:00",
+  "note": "Sorry, I'm in court at that time. Does this new time work for you?"
+}
+
+
+### =================================================================
+### 6. AS CLIENT: View the Rescheduled Meeting
+### =================================================================
+# The client checks their meeting list again. They should now see the meeting
+# with the new date/time, the status "RESCHEDULED", and the lawyer's note.
+GET http://localhost:8080/api/meetings
+Authorization: {{client_token}}
+
+
+### =================================================================
+### 7. AS LAWYER: Accept the Originally Proposed Time
+### =================================================================
+# Let's imagine the lawyer confirms the original time instead.
+# NOTE: To test this, you must run Request #1 again to create a fresh PENDING request.
+# Then, copy its new ID into @created_meeting_id and run this request.
+PUT http://localhost:8080/api/meetings/{{created_meeting_id}}
+Content-Type: application/json
+Authorization: {{lawyer_token}}
+
+{
+  "newStatus": "ACCEPTED"
+}
+
+
+### =================================================================
+### 8. TEST CONFLICT: AS CLIENT: Request an Overlapping Meeting
+### =================================================================
+# This request is EXPECTED TO FAIL with an error (e.g., 409 Conflict or 500 Internal Server Error
+# with the message "The requested time slot is unavailable.").
+# We are trying to book a meeting from 10:30 to 11:30 on the same day the lawyer
+# already has a meeting from 10:00 to 11:00. This should be blocked by your service.
+POST http://localhost:8080/api/meetings
+Content-Type: application/json
+Authorization: {{client_token}}
+
+{
+  "caseId": "{{case_id}}",
+  "title": "This Should Fail - Overlapping Time",
+  "meetingDate": "2025-11-21",
+  "startTime": "10:30:00",
+  "endTime": "11:30:00",
+  "note": "Testing the conflict detection."
+}
+
+
+### =================================================================
+### 9. Test Failure Case: Client Tries to Update a Meeting
+### =================================================================
+# This request is EXPECTED TO FAIL with a 403 Forbidden because only
+# a LAWYER can update a meeting's status.
+PUT http://localhost:8080/api/meetings/{{created_meeting_id}}
+Content-Type: application/json
+Authorization: {{client_token}}
+
+{
+  "newStatus": "ACCEPTED"
+}
