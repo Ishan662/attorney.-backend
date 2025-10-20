@@ -1,11 +1,14 @@
 package com.example.backend.service;
 
 import com.example.backend.dto.hearingDTOS.HearingDTO;
+import com.example.backend.dto.meeting.ClientMeetingRequestDTO;
+import com.example.backend.mapper.RequestMapper;
 import com.example.backend.model.hearing.Hearing;
 import com.example.backend.model.user.User;
 import com.example.backend.payment.model.PaymentStatus;
 import com.example.backend.payment.repository.PaymentRepository;
 import com.example.backend.repositories.HearingRepository;
+import com.example.backend.repositories.RequestRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -24,6 +27,10 @@ public class DashboardService {
     private HearingRepository hearingRepository;
     @Autowired
     private PaymentRepository paymentRepository;
+    @Autowired
+    private RequestRepository requestRepository;
+    @Autowired
+    private RequestMapper requestMapper;
 
 
     public List<Map<String, Object>> getLawyerIncomeChart(UUID lawyerId) {
@@ -81,6 +88,13 @@ public class DashboardService {
         }
 
         return dto;
+    }
+
+    public List<ClientMeetingRequestDTO> getMeetingRequestsForLawyer(UUID lawyerId) {
+        return requestRepository.findAllByRequestedLawyerId(lawyerId)
+                .stream()
+                .map(requestMapper::toDTO)
+                .collect(Collectors.toList());
     }
 
 //    public User getUserInfo() {
