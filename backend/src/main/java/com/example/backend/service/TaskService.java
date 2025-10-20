@@ -138,6 +138,7 @@ public class TaskService {
         dto.setDueDate(task.getDueDate());
         dto.setCreatedAt(task.getCreatedAt());
         dto.setCaseId(task.getCaseId());
+        dto.setType(task.getType());
 
         // Map the assignedByUser to its DTO
         if (task.getAssignedByUser() != null) {
