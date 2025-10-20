@@ -1,4 +1,5 @@
-@auth_token = Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IjU3YmZiMmExMWRkZmZjMGFkMmU2ODE0YzY4NzYzYjhjNjg3NTgxZDgiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vYXR0b3JuZXktNDU4NjIiLCJhdWQiOiJhdHRvcm5leS00NTg2MiIsImF1dGhfdGltZSI6MTc1NTQ0MDc1OCwidXNlcl9pZCI6IlQwVjF5RjV2UUFoTDVlWmt0OTNGVFdCYjlwTjIiLCJzdWIiOiJUMFYxeUY1dlFBaEw1ZVprdDkzRlRXQmI5cE4yIiwiaWF0IjoxNzU1NDQwNzU4LCJleHAiOjE3NTU0NDQzNTgsImVtYWlsIjoiZGFyc2hhbmEyMDIxc3VqYW5AZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImZpcmViYXNlIjp7ImlkZW50aXRpZXMiOnsiZW1haWwiOlsiZGFyc2hhbmEyMDIxc3VqYW5AZ21haWwuY29tIl19LCJzaWduX2luX3Byb3ZpZGVyIjoicGFzc3dvcmQifX0.HO0ziAKMpoOm76EH_qk4XIsYs4qjvDaBnD1xPb6Wz2JbyGCq9XYaTPMUAPJ07DNShphS_Bp4R58u90eNqg66qUnnn2_hM1hmoCMB7UvNS-pLfpzP8lJPzky3YfIkW9IXfQetgfVwbCof9jiQJZG9k0ceQYxsRwOFKUk5dKfo0kg_Go5xyX_oIlh50pWVjxpsVAeauWky80g0V2ND0GzI-axUZCn0YU2-55hJDeRg-7wOfBNEUN5b_7R7CR1g6zCMS2l8jFrmnDS5B4fBuiACmhp-1ZBW7oixUSKK5Y7Vo4lmjM0qunNPPBtbjQCzbeQI60P_0hWYv84zoTvuKxFkWw
+@auth_token = Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IjlkMjEzMGZlZjAyNTg3ZmQ4ODYxODg2OTgyMjczNGVmNzZhMTExNjUiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vYXR0b3JuZXktNDU4NjIiLCJhdWQiOiJhdHRvcm5leS00NTg2MiIsImF1dGhfdGltZSI6MTc2MDk1MzE2MSwidXNlcl9pZCI6IlQwVjF5RjV2UUFoTDVlWmt0OTNGVFdCYjlwTjIiLCJzdWIiOiJUMFYxeUY1dlFBaEw1ZVprdDkzRlRXQmI5cE4yIiwiaWF0IjoxNzYwOTUzMTYxLCJleHAiOjE3NjA5NTY3NjEsImVtYWlsIjoiZGFyc2hhbmEyMDIxc3VqYW5AZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImZpcmViYXNlIjp7ImlkZW50aXRpZXMiOnsiZW1haWwiOlsiZGFyc2hhbmEyMDIxc3VqYW5AZ21haWwuY29tIl19LCJzaWduX2luX3Byb3ZpZGVyIjoicGFzc3dvcmQifX0.CdBExQzMKRGb5kgAm8vb_4lLsTOIa2qTqBxRLBE9oxc1qGLh3662whoiiS8oysNOpMke4dF9BlyC9NH8U_QBxfRB4WpyQyBS7mOc6-BAaCx0AKPIw7kvAMqhYRqxEoydkzLffjK9Y-FsDeobEeAOgy8CvXGZSfE5DbYgvpdk8fUTCQVRV1YK1Ld5fZ2VbWV_EpHIT9stMCeMDKVGCpEydxG8J-7kJ2LpFXMDedJmeqk1GGTkX-P4x4YciFJtKdl6yWqyW_StZQ9_aLH4MQaSe4LtmqMuaslz7GLUJqd8HxpPr5YTetInN1PMFOydSyJsvb14VglBO4ZidTxBgEn17Q
+
 
 ### =================================================================
 ### Get Cases - Test Filtering (GET /api/cases)
@@ -18,7 +19,7 @@ Authorization: {{auth_token}}
 # The backend should now apply the search filter on top of the security filter.
 # It will search across caseTitle, caseNumber, clientName, etc.
 # This uses the new, simpler JPQL LIKE query.
-GET http://localhost:8080/api/cases/filter?searchTerm=CASENO23
+GET http://localhost:8080/api/cases/filter?searchTerm=DC
 Content-Type: application/json
 Authorization: {{auth_token}}
 
@@ -26,14 +27,14 @@ Authorization: {{auth_token}}
 
 ### Test 3: Filter by Case Type ("Probate")
 # This tests a single filter. The searchTerm is null.
-GET http://localhost:8080/api/cases/filter?caseType=Probate
+GET http://localhost:8080/api/cases/filter?caseType=MR/DMR
 Content-Type: application/json
 Authorization: {{auth_token}}
 
 ### =================================================================
 
 ### Test 4: Filter by Court ("Family Court")
-GET http://localhost:8080/api/cases/filter?court=Supreme Court of Sri Lanka
+GET http://localhost:8080/api/cases/filter?court=District Court
 Content-Type: application/json
 Authorization: {{auth_token}}
 
@@ -72,3 +73,49 @@ Authorization: {{auth_token}}
 # GET http://localhost:8080/api/cases?startDate=2024-04-01&endDate=2024-05-31
 # Content-Type: application/json
 # Authorization: {{auth_token}}
+
+### =================================================================
+### FINAL: Test Date Filtering (Based on Hearing Dates)
+### =================================================================
+# These tests use the new, corrected backend logic. The filters will find
+# any case that has AT LEAST ONE hearing within the specified date range.
+
+### Test 8: Filter by Start Date Only
+# Should return all cases that have a hearing on or after November 1st, 2025.
+GET http://localhost:8080/api/cases/filter?startDate=2022-11-01
+Content-Type: application/json
+Authorization: {{auth_token}}
+
+### =================================================================
+
+### Test 9: Filter by End Date Only
+# Should return all cases that have a hearing on or before November 30th, 2025.
+GET http://localhost:8080/api/cases/filter?endDate=2027-11-30
+Content-Type: application/json
+Authorization: {{auth_token}}
+
+### =================================================================
+
+### Test 10: Filter by a Date Range (Start and End Date)
+# Should return all cases that have a hearing anytime in November 2025.
+GET http://localhost:8080/api/cases/filter?startDate=2025-11-01&endDate=2025-11-30
+Content-Type: application/json
+Authorization: {{auth_token}}
+
+### =================================================================
+
+### Test 11: Combination of Date Filter and Search Term
+# This is the ultimate test of the dynamic query builder.
+# Should return cases containing "DC" that ALSO have a hearing in November 2025.
+GET http://localhost:8080/api/cases/filter?searchTerm=DC&startDate=2025-11-01&endDate=2025-11-30
+Content-Type: application/json
+Authorization: {{auth_token}}
+
+### =================================================================
+
+### Test 12: Date Range with No Results
+# This should return a 200 OK with an empty array: []
+# (Assuming you have no hearings scheduled in the year 2099).
+GET http://localhost:8080/api/cases/filter?startDate=2099-01-01&endDate=2099-12-31
+Content-Type: application/json
+Authorization: {{auth_token}}

@@ -6,8 +6,8 @@ import java.time.Instant;
 public class CreateHearingDto {
     private String title;
     private Instant hearingDate;      // main date for filtering
-    private LocalDateTime startTime;  // start time of the hearing
-    private LocalDateTime endTime;    // end time of the hearing
+    private Instant startTime;  // start time of the hearing
+    private Instant endTime;    // end time of the hearing
     private String location;
     private String participants;      // optional
     private String googleMeetLink;    // optional
@@ -20,11 +20,11 @@ public class CreateHearingDto {
     public Instant getHearingDate() { return hearingDate; }
     public void setHearingDate(Instant hearingDate) { this.hearingDate = hearingDate; }
 
-    public LocalDateTime getStartTime() { return startTime; }
-    public void setStartTime(LocalDateTime startTime) { this.startTime = startTime; }
+    public Instant getStartTime() { return startTime; }
+    public void setStartTime(Instant startTime) { this.startTime = startTime; }
 
-    public LocalDateTime getEndTime() { return endTime; }
-    public void setEndTime(LocalDateTime endTime) { this.endTime = endTime; }
+    public Instant getEndTime() { return endTime; }
+    public void setEndTime(Instant endTime) { this.endTime = endTime; }
 
     public String getLocation() { return location; }
     public void setLocation(String location) { this.location = location; }

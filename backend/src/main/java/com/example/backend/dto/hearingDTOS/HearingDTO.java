@@ -15,6 +15,10 @@ public class HearingDTO {
     private String note;
     private HearingStatus status;
 
+    // 👇 add these two lines
+    private UUID caseId;
+    private String caseTitle;
+
     // --- Getters and Setters ---
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
@@ -39,4 +43,11 @@ public class HearingDTO {
 
     public HearingStatus getStatus() { return status; }
     public void setStatus(HearingStatus status) { this.status = status; }
+
+    // 👇 new getters/setters
+    public UUID getCaseId() { return caseId; }
+    public void setCaseId(UUID caseId) { this.caseId = caseId; }
+
+    public String getCaseTitle() { return caseTitle; }
+    public void setCaseTitle(String caseTitle) { this.caseTitle = caseTitle; }
 }

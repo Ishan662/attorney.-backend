@@ -37,6 +37,7 @@ public class Request {
     @Column(columnDefinition = "TEXT")
     private String note; // special note
 
+    // This is the CORRECT mapping
     @Column(name = "meeting_date", nullable = false)
     private LocalDate meetingDate;
 
