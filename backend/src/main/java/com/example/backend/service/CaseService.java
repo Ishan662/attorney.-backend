@@ -32,15 +32,13 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
-import java.time.ZoneOffset;
+import java.time.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.time.ZoneOffset;
-import java.time.Instant;
 
 @Service
 public class CaseService {
@@ -311,13 +309,61 @@ public class CaseService {
      * Fetch cases for the current user, applying dynamic set of filters.
      * All params are optional.
      */
+//    public List<CaseResponseDTO> findCasesForCurrentUser(
+//            String searchTerm, String caseType, String status, String court, LocalDate startDate, LocalDate endDate
+//    ) {
+//        User currentUser = getCurrentUser();
+//        List<Case> cases;
+//
+//        // Convert empty strings from the frontend to nulls for our query
+//        String finalSearchTerm = (searchTerm != null && !searchTerm.isBlank()) ? searchTerm : null;
+//        String finalCaseType = (caseType != null && !caseType.isBlank() && !caseType.equals("All Types")) ? caseType : null;
+//        String finalCourt = (court != null && !court.isBlank() && !court.equals("All Courts")) ? court : null;
+//
+//        CaseStatus finalStatus = null;
+//        if (status != null && !status.isBlank() && !status.equalsIgnoreCase("All Cases")) {
+//            try {
+//                // This will convert "CLOSED" (String) to CaseStatus.CLOSED (Enum)
+//                finalStatus = CaseStatus.valueOf(status.toUpperCase());
+//            } catch (IllegalArgumentException e) {
+//                // Handle cases where the frontend sends an invalid status string
+//                System.err.println("Invalid status value provided: " + status);
+//            }
+//        }
+//
+//        // The logic is now a simple if/else to call the correct repository method
+//        if (currentUser.getRole() == AppRole.LAWYER) {
+//            cases = caseRepository.findCasesForLawyerWithFilters(
+//                    currentUser.getFirm().getId(),
+//                    finalSearchTerm,
+//                    finalCaseType,
+//                    finalCourt,
+//                    finalStatus
+//            );
+//        } else {
+//            // JUNIOR or CLIENT
+//            cases = caseRepository.findCasesForMemberWithFilters(
+//                    currentUser.getId(),
+//                    finalSearchTerm,
+//                    finalCaseType,
+//                    finalCourt,
+//                    finalStatus
+//            );
+//        }
+//
+//        // The mapping part remains the same
+//        return cases.stream()
+//                .map(caseMapper::toResponseDto)
+//                .collect(Collectors.toList());
+//    }
+
+
     public List<CaseResponseDTO> findCasesForCurrentUser(
             String searchTerm, String caseType, String status, String court, LocalDate startDate, LocalDate endDate
     ) {
         User currentUser = getCurrentUser();
-        List<Case> cases;
 
-        // Convert empty strings from the frontend to nulls for our query
+        // Prepare parameters for the query
         String finalSearchTerm = (searchTerm != null && !searchTerm.isBlank()) ? searchTerm : null;
         String finalCaseType = (caseType != null && !caseType.isBlank() && !caseType.equals("All Types")) ? caseType : null;
         String finalCourt = (court != null && !court.isBlank() && !court.equals("All Courts")) ? court : null;
@@ -325,40 +371,35 @@ public class CaseService {
         CaseStatus finalStatus = null;
         if (status != null && !status.isBlank() && !status.equalsIgnoreCase("All Cases")) {
             try {
-                // This will convert "CLOSED" (String) to CaseStatus.CLOSED (Enum)
                 finalStatus = CaseStatus.valueOf(status.toUpperCase());
             } catch (IllegalArgumentException e) {
-                // Handle cases where the frontend sends an invalid status string
                 System.err.println("Invalid status value provided: " + status);
             }
         }
 
-        // The logic is now a simple if/else to call the correct repository method
-        if (currentUser.getRole() == AppRole.LAWYER) {
-            cases = caseRepository.findCasesForLawyerWithFilters(
-                    currentUser.getFirm().getId(),
-                    finalSearchTerm,
-                    finalCaseType,
-                    finalCourt,
-                    finalStatus
-            );
-        } else {
-            // JUNIOR or CLIENT
-            cases = caseRepository.findCasesForMemberWithFilters(
-                    currentUser.getId(),
-                    finalSearchTerm,
-                    finalCaseType,
-                    finalCourt,
-                    finalStatus
-            );
-        }
+        Instant startInstant = (startDate != null) ? startDate.atStartOfDay().toInstant(ZoneOffset.UTC) : null;
+        Instant endInstant = (endDate != null) ? endDate.atTime(LocalTime.MAX).toInstant(ZoneOffset.UTC) : null;
 
-        // The mapping part remains the same
+        // Determine the security parameter: firmId for lawyers, userId for others
+        UUID firmOrUserId = (currentUser.getRole() == AppRole.LAWYER) ? currentUser.getFirm().getId() : currentUser.getId();
+
+        // Call the single, powerful custom repository method
+        List<Case> cases = caseRepository.findCasesWithDynamicFilters(
+                currentUser.getRole(),
+                firmOrUserId,
+                finalSearchTerm,
+                finalCaseType,
+                finalCourt,
+                finalStatus,
+                startInstant,
+                endInstant
+        );
+
+        // Map to DTOs
         return cases.stream()
                 .map(caseMapper::toResponseDto)
                 .collect(Collectors.toList());
     }
-
 
     private User getCurrentUser() {
         String firebaseUid = SecurityContextHolder.getContext().getAuthentication().getName();
