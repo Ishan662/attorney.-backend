@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -36,4 +37,16 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID> {
             "AND p.status <> com.example.backend.payment.model.PaymentStatus.SUCCESS " +
             "AND p.caseEntity.createdAt < :cutoffDate") // <-- Use the case's creation date
     List<Payment> findOverdueByFirmId(@Param("firmId") UUID firmId, @Param("cutoffDate") Instant cutoffDate); // <-- Use Instant
+
+
+    @Query("SELECT p FROM Payment p " +
+            "WHERE p.caseEntity.firm.id = :firmId " +
+            "AND p.createdAt BETWEEN :startOfDay AND :endOfDay " +
+            "ORDER BY p.createdAt DESC")
+    List<Payment> findPaymentsByFirmForDay(
+            @Param("firmId") UUID firmId,
+            @Param("startOfDay") LocalDateTime startOfDay,
+            @Param("endOfDay") LocalDateTime endOfDay
+    );
+
 }

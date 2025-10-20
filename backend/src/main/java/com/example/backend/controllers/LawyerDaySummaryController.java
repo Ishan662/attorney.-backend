@@ -1,6 +1,7 @@
 package com.example.backend.controllers;
 
 import com.example.backend.dto.caseDTOS.ClosedCasesDTO;
+import com.example.backend.dto.paymentsDTOs.PaymentDTO;
 import com.example.backend.model.cases.Case;
 import com.example.backend.service.LawyerDaySummaryService;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +30,12 @@ public class LawyerDaySummaryController {
     public ResponseEntity<List<ClosedCasesDTO>> getOpenCases(@RequestParam UUID lawyerId) {
         List<ClosedCasesDTO> openCases = summaryService.getOpenCasesForToday(lawyerId);
         return ResponseEntity.ok(openCases);
+    }
+
+    @GetMapping("/todays-payments")
+    public ResponseEntity<List<PaymentDTO>> getTodaysPayments(@RequestParam UUID firmId) {
+        List<PaymentDTO> payments = summaryService.getTodaysPaymentsForFirm(firmId);
+        return ResponseEntity.ok(payments);
     }
 
 
