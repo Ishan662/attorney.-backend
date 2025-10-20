@@ -26,11 +26,13 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID> {
     Long sumSuccessfulPaymentsByCaseId(@Param("caseId") UUID caseId, @Param("status") PaymentStatus status);
 
     /**
-     * Finds all payments for cases belonging to a specific firm.
+     * Finds all successful payments for cases belonging to a specific firm.
      * @param firmId The UUID of the firm.
-     * @return A list of payments.
+     * @return A list of successful payments.
      */
-    @Query("SELECT p FROM Payment p WHERE p.caseEntity.firm.id = :firmId ORDER BY p.createdAt DESC")
+    @Query("SELECT p FROM Payment p WHERE p.caseEntity.firm.id = :firmId " +
+            "AND p.status = com.example.backend.payment.model.PaymentStatus.SUCCESS " +
+            "ORDER BY p.createdAt DESC")
     List<Payment> findAllByFirmId(@Param("firmId") UUID firmId);
 
     @Query("SELECT p FROM Payment p WHERE p.caseEntity.firm.id = :firmId " +
