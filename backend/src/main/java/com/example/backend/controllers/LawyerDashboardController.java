@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -45,8 +46,9 @@ public class LawyerDashboardController {
 //        return ResponseEntity.ok(dashboardService.getMeetings());
 //    }
 //
-//    @GetMapping("/dashboard/income")
-//    public ResponseEntity<Map<String, String>> getMonthlyIncome() {
-//        return ResponseEntity.ok(dashboardService.getMonthlyIncome());
-//    }
+    @GetMapping("/income-chart")
+    public ResponseEntity<List<Map<String, Object>>> getIncomeChart(@RequestParam UUID lawyerId) {
+        return ResponseEntity.ok(dashboardService.getLawyerIncomeChart(lawyerId));
+    }
+
 }
