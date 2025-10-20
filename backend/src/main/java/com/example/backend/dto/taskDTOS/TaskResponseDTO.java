@@ -14,6 +14,15 @@ public class TaskResponseDTO {
     private UUID caseId;
     private UserInfoDTO assignedByUser;
     private UserInfoDTO assignedToUser;
+    private String type;
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
 
     // --- Inner DTO for User Information ---
     public static class UserInfoDTO {
