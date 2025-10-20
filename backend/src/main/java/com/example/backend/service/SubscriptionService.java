@@ -22,6 +22,8 @@ import org.springframework.security.core.context.SecurityContextHolder; // <-- F
 import org.springframework.security.core.userdetails.UsernameNotFoundException; // <-- FIX: ADDED IMPORT
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.example.backend.dto.subscription.SubscriptionResponseDto; // <-- ADD IMPORT
+import com.example.backend.mapper.SubscriptionMapper;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -31,10 +33,12 @@ public class SubscriptionService {
 
     private static final Logger logger = LoggerFactory.getLogger(SubscriptionService.class);
 
+
     private final SubscriptionRepository subscriptionRepository;
     private final SubscriptionPlanRepository planRepository;
     private final FirmRepository firmRepository;
     private final UserRepository userRepository;
+    private final SubscriptionMapper subscriptionMapper;
     // --- ▼▼▼ FIX: REMOVED AuthService DEPENDENCY TO BREAK CIRCULAR DEPENDENCY ▼▼▼ ---
     // private final AuthService authService;
 
@@ -43,11 +47,13 @@ public class SubscriptionService {
     public SubscriptionService(SubscriptionRepository subscriptionRepository,
                                SubscriptionPlanRepository planRepository,
                                FirmRepository firmRepository,
-                               UserRepository userRepository) {
+                               UserRepository userRepository,
+                               SubscriptionMapper subscriptionMapper) {
         this.subscriptionRepository = subscriptionRepository;
         this.planRepository = planRepository;
         this.firmRepository = firmRepository;
         this.userRepository = userRepository;
+        this.subscriptionMapper = subscriptionMapper;
     }
 
     @Transactional
@@ -187,6 +193,28 @@ public class SubscriptionService {
 
         logger.info("Subscription {} for {} ID {} was successfully canceled.",
                 stripeSubscriptionId, currentUser.getRole(), currentUser.getId());
+    }
+
+    /**
+     * Retrieves the subscription details for the currently authenticated user.
+     * @return The Subscription entity for the user.
+     */
+    @Transactional(readOnly = true)
+    public SubscriptionResponseDto getSubscriptionForCurrentUser() {
+        User currentUser = getCurrentUser();
+        Subscription subscription;
+
+        if (currentUser.getRole() == AppRole.LAWYER) {
+            // Use .orElseThrow to handle case where subscription might not exist
+            subscription = subscriptionRepository.findByFirmId(currentUser.getFirm().getId())
+                    .orElseThrow(() -> new IllegalStateException("Subscription not found for the current firm."));
+        } else { // Simplified else for other roles like RESEARCHER
+            subscription = subscriptionRepository.findByUserId(currentUser.getId())
+                    .orElseThrow(() -> new IllegalStateException("Subscription not found for the current user."));
+        }
+
+        // Convert the entity to a DTO before returning
+        return subscriptionMapper.toSubscriptionResponseDto(subscription);
     }
 
     // --- ▼▼▼ FIX: ADDED THIS PRIVATE HELPER METHOD TO GET THE CURRENT USER ▼▼▼ ---
